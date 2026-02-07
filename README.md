@@ -4,11 +4,20 @@ Architect is an upstream companion to [Conductor](https://github.com/obra/conduc
 
 ## Installation
 
+**Claude Code:**
 ```bash
 git clone https://github.com/LuisDee/architect.git
 claude plugin marketplace add ./architect
 claude plugin install architect@architect-marketplace
 ```
+
+**Gemini CLI:**
+```bash
+git clone https://github.com/LuisDee/architect.git
+gemini extensions install ./architect
+```
+
+Both platforms install from the same repo. Claude Code reads the Markdown commands, Gemini CLI reads the TOML commands. Shared components (templates, scripts, references, hooks) work identically on both platforms.
 
 ## Quick Start
 
@@ -145,6 +154,20 @@ For full specification details, see the design docs in this repo:
 - `architect-refactoring-plan.md` — Detailed refactoring plan from spec to brief model.
 - `architect-plugin-structure.md` — Plugin file tree and format conventions.
 - `architect-plugin-packaging.md` — Supplementary packaging and delivery context.
+
+## Compatibility
+
+Architect works with both Claude Code and Gemini CLI from a single repo.
+
+| Component | Claude Code | Gemini CLI |
+|-----------|------------|------------|
+| Commands | commands/*.md | commands/architect/*.toml |
+| Manifest | .claude-plugin/plugin.json | gemini-extension.json |
+| Context | CLAUDE.md | GEMINI.md |
+| Agents | agents/*.md | agents/*.md (same) |
+| Skills | skills/*/SKILL.md | skills/*/SKILL.md (same) |
+| Scripts | scripts/*.py | scripts/*.py (same) |
+| Templates | Shared | Shared |
 
 ## License
 

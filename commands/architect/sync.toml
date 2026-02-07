@@ -1,0 +1,158 @@
+description = "Process pending discoveries, validate architecture sync, and run wave completion quality gate"
+prompt = """
+# /architect-sync
+
+You are processing pending architectural discoveries and validating system consistency. This command runs automatically at wave boundaries (via the wave-sync hook) and manually any time.
+
+---
+
+## Pre-Flight
+
+1. Verify `architect/` directory exists. If not: "Run /architect-decompose first."
+2. Verify `architect/discovery/` directory exists. If not: "Discovery system not initialized. Run /architect-decompose to set up."
+
+---
+
+## Step 1: Process Pending Discoveries
+
+### 1a. Check for pending discoveries
+```
+ls architect/discovery/pending/
+```
+If empty, report "No pending discoveries" and skip to Step 2.
+
+### 1b. Run merge script
+```bash
+python ${extensionPath}/scripts/merge_discoveries.py --discovery-dir architect/discovery --tracks-dir conductor/tracks
+```
+
+Review the output. For each discovery:
+
+**If DUPLICATE:** Note it was merged. No further action.
+
+**If CONFLICT detected:** The merge script reclassifies conflicting entries as ARCHITECTURE_CHANGE. Present both sides to the developer:
+- "Discovery A says: [constraint]. Discovery B says: [contradicting constraint]. These conflict. Which should take precedence?"
+
+**If URGENCY ESCALATED:** Note the escalation. If escalated to BLOCKING, alert the developer immediately.
+
+### 1c. Process by classification
+
+For each non-duplicate discovery, execute the appropriate action:
+
+**NEW_TRACK:**
+1. Generate brief.md and metadata.json for the new track using templates from `${extensionPath}/skills/architect/templates/`
+2. Insert into dependency graph:
+   ```bash
+   python ${extensionPath}/scripts/validate_dag.py --check-edge --from <new_track> --to <dependency>
+   ```
+3. If cycle detected, reclassify as ARCHITECTURE_CHANGE and present to developer
+4. If no cycle, add to dependency-graph.md and re-run:
+   ```bash
+   python ${extensionPath}/scripts/topological_sort.py --tracks-dir conductor/tracks
+   ```
+5. Update execution-sequence.md with new wave assignment
+6. Update conductor/tracks.md registry
+
+**TRACK_EXTENSION:**
+1. Read the target track's plan.md
+2. Append a new phase using the patch-phase template: `${extensionPath}/skills/architect/templates/patch-phase.md`
+3. Update metadata.json: add entry to patches array
+4. If track state is COMPLETE, update state to NEEDS_PATCH
+
+**NEW_DEPENDENCY:**
+1. Validate the edge won't create a cycle:
+   ```bash
+   python ${extensionPath}/scripts/validate_dag.py --check-edge --from <dependent> --to <dependency>
+   ```
+2. If cycle: reclassify as ARCHITECTURE_CHANGE, present to developer
+3. If no cycle: add edge to dependency-graph.md, flag for developer review
+4. Check if this changes wave ordering:
+   ```bash
+   python ${extensionPath}/scripts/topological_sort.py --tracks-dir conductor/tracks
+   ```
+
+**CROSS_CUTTING_CHANGE:**
+1. Version-append to architect/cross-cutting.md (next version number)
+2. Build retroactive compliance table:
+   - NOT_STARTED tracks: will auto-inherit via context header regeneration
+   - IN_PROGRESS tracks: will pick up via constraint-update-check hook
+   - COMPLETE tracks: generate patch phase, set state to NEEDS_PATCH
+3. Regenerate context headers in brief.md for NOT_STARTED tracks:
+   ```bash
+   python ${extensionPath}/scripts/inject_context.py --track all --tracks-dir conductor/tracks --architect-dir architect
+   ```
+
+**ARCHITECTURE_CHANGE:**
+1. Do NOT auto-apply. Present to developer with:
+   - What the discovery says
+   - What would need to change in architecture.md
+   - Which tracks are affected
+   - Recommended approach
+2. Wait for developer decision:
+   - Accept: apply changes, potentially re-decompose affected areas
+   - Reject: note rejection reason, close the discovery
+   - Defer: move to backlog with trigger condition
+
+**INTERFACE_MISMATCH:**
+1. Present to developer with specific differences:
+   - What interfaces.md says the contract should be
+   - What was actually found
+   - Which tracks consume this interface
+2. Developer decides:
+   - Fix the implementation (producing track needs a patch)
+   - Update the contract (interfaces.md needs to change, consumers need review)
+
+---
+
+## Step 2: Run Sync Check
+
+Check for drift between architecture artifacts and track metadata:
+```bash
+python ${extensionPath}/scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
+```
+
+Review results:
+
+- **Interface mismatches:** Interfaces declared in interfaces.md but not in metadata, or vice versa. Present each for resolution.
+- **CC version drift:** Tracks running against stale CC versions. IN_PROGRESS tracks should have picked up changes via Hook 01. COMPLETE tracks need patches.
+- **Orphaned interfaces:** Tracks claiming interfaces not documented in interfaces.md. Add to interfaces.md or remove from metadata.
+- **Consumed-but-unowned:** A track consumes an interface no other track owns. This is a missing dependency.
+
+---
+
+## Step 3: Validate Wave Completion (if triggered at wave boundary)
+
+If this sync was triggered because all tracks in a wave are marked complete:
+
+### 3a. Run quality gate
+```bash
+python ${extensionPath}/scripts/validate_wave_completion.py --wave <N> --tracks-dir conductor/tracks --discovery-dir architect/discovery
+```
+
+### 3b. Present results
+For each track in the wave, show:
+- Phases: complete or incomplete (with count)
+- Tests: passing, failing, or no test command
+- Blocking discoveries: count
+- Patches: all applied or pending
+
+### 3c. Developer decides
+If any checks FAIL:
+- **Fix issues** — Address failures and re-run sync
+- **Waive checks** — Developer provides a reason for each waiver (logged)
+- **Force-advance** — Skip the gate entirely (logged as override)
+
+If all checks PASS:
+- Present next wave preview (tracks, complexity, dependencies)
+- "Wave N complete. Ready to start Wave N+1."
+
+---
+
+## Step 4: Summary
+
+Report:
+- Discoveries processed: N (M duplicates, K conflicts, J escalated)
+- Sync status: in-sync or N mismatches found
+- Wave completion: PASS / FAIL / not applicable
+- Action items remaining (if any)
+"""

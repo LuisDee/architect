@@ -4,26 +4,9 @@ Architect is an upstream companion to [Conductor](https://github.com/obra/conduc
 
 ## Installation
 
-### Option A: Plugin marketplace (recommended)
-
 ```bash
-claude plugin install architect@your-marketplace
-```
-
-### Option B: Local path (during development)
-
-```bash
-claude plugin install --path /path/to/architect-plugin
-```
-
-### Option C: Git clone
-
-```bash
-# Per-project
-git clone https://github.com/<org>/architect-plugin .claude/plugins/architect
-
-# Global (available in all projects)
-git clone https://github.com/<org>/architect-plugin ~/.claude/plugins/architect
+git clone https://github.com/LuisDee/architect.git
+claude plugin install --path ./architect
 ```
 
 ## Quick Start
@@ -86,7 +69,6 @@ Shows bird's-eye progress: complexity-weighted completion per wave and overall, 
       interactively with developer    After each task → discovery check
     Follows plan.md tasks             Before phase complete → CC compliance
     Writes code                       After track complete → wave sync
-                                       After track complete → wave sync
                                               │
                                               ▼
                                     /architect-sync (at wave boundary)

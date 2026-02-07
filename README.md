@@ -6,7 +6,7 @@ Architect generates briefs, not specs. Each track gets a lightweight handoff fil
 
 During implementation, a discovery system catches emergent work that affects other tracks, and hooks enforce architectural consistency without requiring the developer to remember constraints.
 
-Architect owns the architecture. Conductor owns the implementation.
+**Architect owns the architecture. Conductor owns the implementation.**
 
 ## Installation
 

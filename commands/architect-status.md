@@ -1,0 +1,98 @@
+---
+description: Show bird's eye complexity-weighted progress, pending discoveries, drift warnings, and blocked tracks
+---
+
+# /architect-status
+
+You are reporting the current state of the Architect-managed project.
+
+---
+
+## Pre-Flight
+
+1. Verify `architect/` directory exists. If not: "No Architect setup found. Run /architect-decompose first."
+2. Verify `conductor/tracks/` exists and has track directories. If not: "No tracks found."
+
+---
+
+## Step 1: Run Progress Calculation
+
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/progress.py --tracks-dir conductor/tracks --discovery-dir architect/discovery
+```
+
+---
+
+## Step 2: Run Sync Check
+
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
+```
+
+---
+
+## Step 3: Check Pending Discoveries
+
+Count files in `architect/discovery/pending/`. For any BLOCKING discoveries, read and summarize.
+
+---
+
+## Step 4: Present Status Report
+
+Format the output as a clear status report:
+
+### Overall Progress
+```
+Overall: XX% complete (N/M complexity-weighted units)
+Tracks: X complete, Y in-progress, Z not started
+```
+
+### Per-Wave Breakdown
+
+For each wave, show:
+```
+Wave N: [LABEL] — XX% complete
+  [track_id] (complexity) — STATE
+  [track_id] (complexity) — STATE
+```
+
+Use state indicators:
+- COMPLETE tracks: mark as done
+- IN_PROGRESS: show phase completion (e.g., "Phase 2/4")
+- NOT_STARTED: show as pending
+- NEEDS_PATCH: show patch status
+- PAUSED: show reason if available
+
+### Pending Discoveries
+```
+Pending discoveries: N
+  - BLOCKING: list if any (these need immediate attention)
+  - NEXT_WAVE: count
+  - BACKLOG: count
+```
+
+### Drift Warnings
+From sync check results:
+- CC version drift: which tracks are behind
+- Interface mismatches: which contracts are inconsistent
+- Orphaned interfaces: which are undocumented
+
+### Blocked Tracks
+List any tracks that cannot proceed:
+- Blocked by: incomplete dependency
+- Blocked by: BLOCKING discovery
+- Blocked by: unapplied patch
+
+### Unapplied Patches
+List NEEDS_PATCH tracks and which CC version they need to catch up to.
+
+---
+
+## Step 5: Recommendations
+
+Based on the status, suggest next actions:
+- If blocking discoveries exist: "Run /architect-sync to process discoveries"
+- If drift detected: "Run /architect-sync to resolve inconsistencies"
+- If current wave is complete: "All Wave N tracks are done. Run /architect-sync to validate and advance to Wave N+1"
+- If patches pending: "N tracks need retroactive compliance patches for CC vX.Y"
+- If everything is clean: "On track. Continue with /conductor:implement on [next track]"

@@ -6,7 +6,8 @@ Architect is an upstream companion to [Conductor](https://github.com/obra/conduc
 
 ```bash
 git clone https://github.com/LuisDee/architect.git
-claude plugin install --path ./architect
+claude plugin marketplace add ./architect
+claude plugin install architect@architect-marketplace
 ```
 
 ## Quick Start

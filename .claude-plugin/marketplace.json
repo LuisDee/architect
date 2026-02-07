@@ -1,0 +1,23 @@
+{
+  "name": "architect-marketplace",
+  "owner": {
+    "name": "LuisDee",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Architect plugin marketplace"
+  },
+  "plugins": [
+    {
+      "name": "architect",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/LuisDee/architect.git"
+      },
+      "description": "Project decomposition and architecture advisory for Conductor. Transforms project vision into sequenced, dependency-aware implementation tracks with cross-cutting constraints.",
+      "version": "1.0.0",
+      "repository": "https://github.com/LuisDee/architect",
+      "license": "MIT"
+    }
+  ]
+}

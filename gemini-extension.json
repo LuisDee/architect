@@ -1,5 +1,6 @@
 {
   "name": "architect",
   "version": "1.0.0",
-  "description": "Decomposes projects into sequenced, dependency-aware tracks for Conductor. Architect owns the architecture. Conductor owns the implementation."
+  "description": "Decomposes projects into sequenced, dependency-aware tracks for Conductor. Architect owns the architecture. Conductor owns the implementation.",
+  "contextFileName": "GEMINI.md"
 }

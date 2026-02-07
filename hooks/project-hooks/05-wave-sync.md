@@ -45,6 +45,11 @@ Review the output:
 ### 4. Run sync check
 
 ```bash
+python scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
+```
+
+Or if running from the plugin:
+```bash
 python ${CLAUDE_PLUGIN_ROOT}/scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
 ```
 
@@ -52,6 +57,11 @@ Review drift warnings. If interface mismatches or CC version drift are found, th
 
 ### 5. Run wave quality gate
 
+```bash
+python scripts/validate_wave_completion.py --wave <N> --tracks-dir conductor/tracks --discovery-dir architect/discovery
+```
+
+Or if running from the plugin:
 ```bash
 python ${CLAUDE_PLUGIN_ROOT}/scripts/validate_wave_completion.py --wave <N> --tracks-dir conductor/tracks --discovery-dir architect/discovery
 ```

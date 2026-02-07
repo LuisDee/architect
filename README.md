@@ -1,6 +1,12 @@
 # Architect
 
-Architect is an upstream companion to [Conductor](https://github.com/obra/conductor). It reads your project's product.md and tech-stack.md, performs architecture research to identify patterns and cross-cutting concerns you haven't considered, and generates fully sequenced, dependency-aware implementation tracks. After Architect runs, you live entirely in Conductor — Architect's value is embedded in context headers, hooks, and a living architecture that evolves through automated discovery.
+Architect is an upstream companion to [Conductor](https://github.com/obra/conductor).It takes a project description and decomposes it into a fully sequenced, dependency-aware set of implementation tracks - identifying architectural patterns the developer hasn't considered, injecting cross-cutting constraints, mapping interfaces between tracks, and ordering everything into parallelisable waves.
+
+Architect generates briefs, not specs. Each track gets a lightweight handoff file with scope, key design decisions (as questions, not answers), and architectural context. When Conductor picks up a track, it reads the brief and runs its own interactive refinement — asking the developer targeted design questions before generating the full spec and plan.
+
+During implementation, a discovery system catches emergent work that affects other tracks, and hooks enforce architectural consistency without requiring the developer to remember constraints.
+
+Architect owns the architecture. Conductor owns the implementation.
 
 ## Installation
 

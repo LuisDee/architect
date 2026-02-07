@@ -1,0 +1,7 @@
+{
+  "name": "architect",
+  "version": "1.0.0",
+  "description": "Project decomposition and architecture advisory for Conductor. Transforms project vision into sequenced, dependency-aware implementation tracks with cross-cutting constraints.",
+  "keywords": ["conductor", "architecture", "decomposition", "tracks", "planning"],
+  "license": "MIT"
+}

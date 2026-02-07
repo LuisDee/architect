@@ -2,7 +2,7 @@
 
 ## How to Implement
 
-Use `/conductor:implement` to execute tracks. Follow the plan.md in each track directory.
+Use `/conductor:implement` to execute tracks. Follow the brief.md for context, then use /conductor:implement to generate spec and plan.
 
 ## Track Selection
 
@@ -11,8 +11,8 @@ Pick the next track from the current wave in tracks.md. All tracks in a wave are
 ## Implementation Loop
 
 For each track:
-1. Read the track's spec.md (includes context header with cross-cutting constraints)
-2. Follow the track's plan.md phase by phase
+1. Read the track's brief.md (includes context header with cross-cutting constraints)
+2. Conductor generates spec.md and plan.md interactively
 3. Complete all tasks in each phase before moving to the next
 4. Run validation at the end of each phase
 5. After all phases complete, run final validation

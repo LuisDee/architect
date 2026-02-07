@@ -25,3 +25,9 @@ If the marker is removed, hooks are disabled — graceful degradation.
 **Every task completion:** Read Hook 03 (discovery check)
 **Before using another track's API:** Read Hook 02 (interface verification)
 **After track completion:** Read Hook 05 (wave sync)
+
+## Context Header Lifecycle
+
+1. Architect generates `brief.md` with a context header (constraints, interfaces, dependencies)
+2. Conductor generates `spec.md` at implementation time, preserving the context header at top
+3. During implementation, hooks read constraints from `architect/cross-cutting.md` directly (not from the header — the header is for initial orientation)

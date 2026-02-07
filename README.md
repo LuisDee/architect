@@ -1,12 +1,6 @@
 # Architect
 
-Architect is an upstream companion to [Conductor](https://github.com/obra/conductor).It takes a project description and decomposes it into a fully sequenced, dependency-aware set of implementation tracks - identifying architectural patterns the developer hasn't considered, injecting cross-cutting constraints, mapping interfaces between tracks, and ordering everything into parallelisable waves.
-
-Architect generates briefs, not specs. Each track gets a lightweight handoff file with scope, key design decisions (as questions, not answers), and architectural context. When Conductor picks up a track, it reads the brief and runs its own interactive refinement — asking the developer targeted design questions before generating the full spec and plan.
-
-During implementation, a discovery system catches emergent work that affects other tracks, and hooks enforce architectural consistency without requiring the developer to remember constraints.
-
-**Architect owns the architecture. Conductor owns the implementation.**
+Architect is an upstream companion to [Conductor](https://github.com/obra/conductor). It reads your project's product.md and tech-stack.md, performs architecture research to identify patterns and cross-cutting concerns you haven't considered, and generates fully sequenced, dependency-aware track briefs. Each brief captures scope, key design decisions (as questions, not answers), and cross-cutting constraints. When you run `/conductor:implement`, Conductor reads the brief and drives interactive spec and plan generation with developer input. Architect's value is embedded in context headers, hooks, and a living architecture that evolves through automated discovery.
 
 ## Installation
 
@@ -49,7 +43,7 @@ git clone https://github.com/<org>/architect-plugin ~/.claude/plugins/architect
 
 ### /architect-decompose
 
-The primary command. Reads Conductor files, runs architecture research (extracting signals from your requirements and matching them to 18 built-in patterns), presents recommendations in three tiers (strongly recommended / recommended / consider for later), then generates a complete system architecture with cross-cutting constraints, interface contracts, and a dependency DAG. From the DAG it produces wave-ordered tracks, each with a spec (including compressed context header), implementation plan (phased tasks with done criteria), and metadata. Installs workflow hooks and initializes the discovery system. Three review gates let you approve architecture, track list, and final output before anything is written.
+The primary command. Reads Conductor files, runs architecture research (extracting signals from your requirements and matching them to 18 built-in patterns), presents recommendations in three tiers (strongly recommended / recommended / consider for later), then generates a complete system architecture with cross-cutting constraints, interface contracts, and a dependency DAG. From the DAG it produces wave-ordered track briefs, each with scope, key design decisions (questions for the developer), architectural notes, and a compressed context header. Does NOT generate spec.md or plan.md — Conductor does that interactively with developer input during `/conductor:implement`. Installs workflow hooks and initializes the discovery system. Three review gates let you approve architecture, track list, and final output before anything is written.
 
 ### /architect-sync
 
@@ -81,16 +75,17 @@ Shows bird's-eye progress: complexity-weighted completion per wave and overall, 
                                       architect/execution-sequence.md
                                       architect/hooks/ (5 workflow hooks)
                                       architect/discovery/ (pending + processed)
-                                      conductor/tracks/*/spec.md + plan.md + metadata.json
+                                      conductor/tracks/*/brief.md + metadata.json
                                       conductor/tracks.md (registry)
                                               │
                                               ▼
     /conductor:implement             Hooks fire during implementation
     ────────────────────             ────────────────────────────────
-    Reads spec.md (with               Before each phase → CC version check
-      context header)                  Before consuming API → interface verify
-    Follows plan.md tasks              After each task → discovery check
-    Writes code                        Before phase complete → CC compliance
+    Reads brief.md                    Before each phase → CC version check
+    Generates spec.md + plan.md       Before consuming API → interface verify
+      interactively with developer    After each task → discovery check
+    Follows plan.md tasks             Before phase complete → CC compliance
+    Writes code                       After track complete → wave sync
                                        After track complete → wave sync
                                               │
                                               ▼
@@ -118,7 +113,7 @@ architect-plugin/
 │   │   ├── architecture-patterns.md    # 18 patterns with signals + trade-offs
 │   │   ├── cross-cutting-catalog.md    # 20-item always-evaluate checklist
 │   │   └── classification-guide.md     # Discovery classification decision tree
-│   └── templates/                      # 11 generation templates
+│   └── templates/                      # 10 generation templates
 │       ├── context-header.md
 │       ├── context-header-minimal.md
 │       ├── architecture.md
@@ -126,8 +121,7 @@ architect-plugin/
 │       ├── interfaces.md
 │       ├── dependency-graph.md
 │       ├── execution-sequence.md
-│       ├── track-spec.md
-│       ├── track-plan.md
+│       ├── track-brief.md
 │       ├── track-metadata.json
 │       └── patch-phase.md
 ├── hooks/project-hooks/                # Copied into user projects
@@ -145,8 +139,7 @@ architect-plugin/
 │   ├── sync_check.py
 │   ├── validate_wave_completion.py
 │   ├── check_conductor_compat.py
-│   ├── progress.py
-│   └── regenerate_specs.py
+│   └── progress.py
 └── README.md
 ```
 
@@ -155,7 +148,7 @@ architect-plugin/
 Architect is designed to work alongside Conductor without modifying any of Conductor's core files or conventions:
 
 - **Reads** `conductor/product.md`, `conductor/tech-stack.md`, `conductor/workflow.md`, and `conductor/product-guidelines.md` as inputs. Never modifies these except to add one marker line to workflow.md.
-- **Writes** to `conductor/tracks/` (spec.md, plan.md, metadata.json per track) and `conductor/tracks.md` in formats Conductor expects.
+- **Writes** to `conductor/tracks/` (brief.md + metadata.json per track) and `conductor/tracks.md` in formats Conductor expects. Conductor generates spec.md and plan.md interactively at implementation time.
 - **The single integration point** is the `<!-- ARCHITECT:HOOKS -->` marker in workflow.md. If removed, hooks are disabled and Conductor works normally.
 - **All architect/ files** are separate from Conductor. Deleting the `architect/` directory cleanly removes Architect's artifacts without affecting Conductor.
 - **Scripts require Python 3.10+** with stdlib only (no pip install needed).
@@ -164,8 +157,10 @@ Architect is designed to work alongside Conductor without modifying any of Condu
 
 For full specification details, see the design docs in this repo:
 
-- `architect-final-design.md` — The authoritative spec. Everything flows from this.
-- `architect-plugin-structure.md` — Exact plugin file tree and format conventions.
+- `architect-final-design.md` — The original spec (superseded in part by the amendment).
+- `architect-design-ammendment.md` — Brief-based handoff model amendment.
+- `architect-refactoring-plan.md` — Detailed refactoring plan from spec to brief model.
+- `architect-plugin-structure.md` — Plugin file tree and format conventions.
 - `architect-plugin-packaging.md` — Supplementary packaging and delivery context.
 
 ## License

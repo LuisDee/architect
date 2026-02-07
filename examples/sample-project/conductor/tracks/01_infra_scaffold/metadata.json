@@ -4,7 +4,7 @@
   "complexity": "M",
   "wave": 1,
 
-  "cc_version_at_start": null,
+  "cc_version_at_brief": null,
   "cc_version_current": "v1",
 
   "dependencies": [],
@@ -14,11 +14,9 @@
   "events_published": [],
   "events_consumed": [],
 
-  "test_command": "make test",
-  "test_timeout_seconds": 300,
-
   "patches": [],
 
+  "created_at": "2025-01-15T10:00:00Z",
   "started_at": null,
   "completed_at": null
 }

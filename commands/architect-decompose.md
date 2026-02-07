@@ -25,7 +25,7 @@ Run this once after `/conductor:setup`. Re-run after major pivots.
    ```
    - If it reports missing required files, stop and tell the user which files are needed.
    - If it reports warnings, note them but continue.
-   - If it detects an existing ARCHITECT:HOOKS marker, warn: "Architect hooks already installed. This will regenerate architecture and tracks. Existing USER ADDITIONS zones in specs will be preserved."
+   - If it detects an existing ARCHITECT:HOOKS marker, warn: "Architect hooks already installed. This will regenerate architecture and track briefs."
 
 3. **Read Conductor files:**
    - `conductor/product.md` (required)
@@ -193,46 +193,69 @@ Present the complete architecture to the developer:
 - Track list with wave assignments
 - Dependency graph
 
-Ask: "Does this architecture look right? Any changes before I generate detailed track specs and plans?"
+Ask: "Does this architecture look right? Any changes before I generate track briefs?"
 
 Wait for developer approval before proceeding.
 
 ---
 
-## Step 5: Generate All Tracks
+## Step 5: Generate Track Briefs
+
+> **Critical: Brief vs Spec**
+>
+> You are generating BRIEFS, not specs. A brief tells Conductor what the track
+> is about and what to ask the developer. It does NOT make design decisions.
+>
+> WRONG (making decisions):
+>   "Use SQLAlchemy 2.0 async with Alembic for migrations"
+>   "Spawn the user's default shell by reading $SHELL"
+>   "FR-1: Dedicated reader thread performs blocking read()..."
+>
+> RIGHT (identifying the decision):
+>   "ORM/migration strategy: SQLAlchemy sync vs async? Alembic vs raw SQL?"
+>   "Shell spawning: $SHELL vs hardcoded path? Fallback on missing shell?"
+>   "Threading model: dedicated reader vs async I/O? Reader-only vs reader+writer?"
+>
+> WRONG (writing implementation plans):
+>   Phase 1: Set up Alembic, create initial migration, define models...
+>
+> RIGHT (estimating scope):
+>   Complexity: M
+>   Estimated Phases: ~3
+>
+> The developer makes design choices when Conductor asks them during implementation.
+> Your job is to identify WHAT needs deciding, not to decide it.
 
 For each track in execution sequence order:
 
-### 5a. Generate conductor/tracks/<track_id>/spec.md
+### 5a. Generate conductor/tracks/<track_id>/brief.md
 
 1. Generate context header:
    ```bash
    python ${CLAUDE_PLUGIN_ROOT}/scripts/inject_context.py --track <track_id> --tracks-dir conductor/tracks --architect-dir architect
    ```
-2. Read template: `${CLAUDE_PLUGIN_ROOT}/skills/architect/templates/track-spec.md`
-3. Fill in: overview, scope (in/out), technical approach, acceptance criteria, CC compliance mapping
-4. Write to `conductor/tracks/<track_id>/spec.md`
+2. Read template: `${CLAUDE_PLUGIN_ROOT}/skills/architect/templates/track-brief.md`
+3. Fill in:
+   - **What This Track Delivers** — one paragraph: what, why, where in system
+   - **Scope IN** — concrete boundaries of what's included
+   - **Scope OUT** — what's excluded with pointers to where it lives
+   - **Key Design Decisions** — numbered list of genuine design forks with options and trade-offs (3-7 per track). These are QUESTIONS for the developer, not answers.
+   - **Architectural Notes** — integration points, cross-track impacts, gotchas from the architecture analysis
+   - **Complexity** — S/M/L/XL
+   - **Estimated Phases** — advisory count for Conductor's planning
+4. Write to `conductor/tracks/<track_id>/brief.md`
 
-### 5b. Generate conductor/tracks/<track_id>/plan.md
+**Do NOT generate spec.md or plan.md.** Conductor generates these interactively with the developer during `/conductor:implement`.
 
-1. Read template: `${CLAUDE_PLUGIN_ROOT}/skills/architect/templates/track-plan.md`
-2. Design phases (typically 2-5 per track):
-   - Phase 1 is usually setup/scaffold
-   - Middle phases are core functionality
-   - Final phase is integration + polish
-3. Each phase has:
-   - Tasks with concrete done criteria
-   - Validation step (CC compliance check + tests)
-   - Conductor manual verification checkpoint
-4. Write to `conductor/tracks/<track_id>/plan.md`
-
-### 5c. Generate conductor/tracks/<track_id>/metadata.json
+### 5b. Generate conductor/tracks/<track_id>/metadata.json
 
 1. Read template: `${CLAUDE_PLUGIN_ROOT}/skills/architect/templates/track-metadata.json`
-2. Fill in: track_id, state (NOT_STARTED), complexity (S/M/L/XL), wave, cc_version_current (v1), dependencies, interfaces_owned, interfaces_consumed, events_published, events_consumed, test_command, test_timeout_seconds
+2. Fill in: track_id, state (NOT_STARTED), complexity (S/M/L/XL), wave, cc_version_at_brief (v1), cc_version_current (v1), dependencies, interfaces_owned, interfaces_consumed, created_at (ISO 8601 timestamp)
 3. Write to `conductor/tracks/<track_id>/metadata.json`
 
-### 5d. Update conductor/tracks.md
+Note: `test_command` and `test_timeout_seconds` are NOT set here. Conductor adds these when it generates the implementation plan, since Conductor knows the test framework.
+
+### 5c. Update conductor/tracks.md
 
 After generating all tracks, update (or create) `conductor/tracks.md` as the track registry. Format:
 ```markdown
@@ -244,16 +267,17 @@ After generating all tracks, update (or create) `conductor/tracks.md` as the tra
 | ... | ... | ... | ... | ... | ... |
 ```
 
-### REVIEW GATE 3: Track Approval
+### REVIEW GATE 3: Track Brief Approval
 Present the track list summary to the developer:
 - Total track count and complexity distribution
 - Wave assignments
 - Key dependencies
 - Estimated effort shape (which waves are heaviest)
+- For each track: one-line scope summary and count of key design decisions
 
-Ask: "These are the tracks I'll generate. Any adjustments before I finalize?"
+Ask: "These are the track briefs. Any adjustments before I finalize?"
 
-Wait for approval. Then generate all track files.
+Wait for approval. Then write all brief and metadata files.
 
 ---
 
@@ -295,14 +319,14 @@ architect/discovery/discovery-log.md  (header only)
 ## Step 7: Final Summary
 
 Present a complete summary:
-- Number of tracks generated, grouped by wave
+- Number of track briefs generated, grouped by wave
 - Total complexity weight
 - Architecture patterns adopted
 - Cross-cutting constraints (v1)
 - Number of interfaces defined
 - Hook installation status
 
-Tell the developer: "Architecture and tracks are ready. Start implementation with `/conductor:implement` on Wave 1 tracks. The hooks in architect/hooks/ will guide cross-cutting compliance and discovery during implementation."
+Tell the developer: "Architecture and track briefs are ready. Start implementation with `/conductor:implement` on Wave 1 tracks. Conductor will read each brief and guide you through interactive spec and plan generation. The hooks in architect/hooks/ will guide cross-cutting compliance and discovery during implementation."
 
 ---
 
@@ -313,10 +337,10 @@ If `architect/` already exists and tracks are in various states, classify each:
 | Track State | Affected by Pivot? | Action |
 |-------------|-------------------|--------|
 | COMPLETE | No | FREEZE — no changes |
-| COMPLETE | Yes | Generate patch phase in plan.md |
+| COMPLETE | Yes | Generate patch phase in plan.md (Conductor already generated it) |
 | IN_PROGRESS | No | FREEZE_AFTER_COMPLETION — let it finish |
 | IN_PROGRESS | Yes | PAUSE — present options to developer |
-| NOT_STARTED | Affected | REGENERATE — new spec/plan |
-| (new) | — | GENERATE — create from scratch |
+| NOT_STARTED | Affected | REGENERATE — new brief.md |
+| (new) | — | GENERATE — create brief.md from scratch |
 
 Rebuild dependency graph around frozen tracks. Re-sequence waves.

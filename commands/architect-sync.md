@@ -42,7 +42,7 @@ Review the output. For each discovery:
 For each non-duplicate discovery, execute the appropriate action:
 
 **NEW_TRACK:**
-1. Generate spec.md, plan.md, metadata.json for the new track using templates from `${CLAUDE_PLUGIN_ROOT}/skills/architect/templates/`
+1. Generate brief.md and metadata.json for the new track using templates from `${CLAUDE_PLUGIN_ROOT}/skills/architect/templates/`
 2. Insert into dependency graph:
    ```bash
    python ${CLAUDE_PLUGIN_ROOT}/scripts/validate_dag.py --check-edge --from <new_track> --to <dependency>
@@ -79,9 +79,9 @@ For each non-duplicate discovery, execute the appropriate action:
    - NOT_STARTED tracks: will auto-inherit via context header regeneration
    - IN_PROGRESS tracks: will pick up via constraint-update-check hook
    - COMPLETE tracks: generate patch phase, set state to NEEDS_PATCH
-3. Regenerate context headers for NOT_STARTED tracks:
+3. Regenerate context headers in brief.md for NOT_STARTED tracks:
    ```bash
-   python ${CLAUDE_PLUGIN_ROOT}/scripts/regenerate_specs.py --track all --tracks-dir conductor/tracks --architect-dir architect
+   python ${CLAUDE_PLUGIN_ROOT}/scripts/inject_context.py --track all --tracks-dir conductor/tracks --architect-dir architect
    ```
 
 **ARCHITECTURE_CHANGE:**

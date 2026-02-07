@@ -1,7 +1,8 @@
 # Context Header Template (~2000 token budget)
 #
 # Usage: inject_context.py reads this template and fills placeholders for each track.
-# The output is prepended to every spec.md.
+# The output is prepended to every brief.md. When Conductor generates spec.md,
+# it preserves this context header from the brief.
 #
 # Placeholders: {{TRACK_ID}}, {{WAVE}}, {{CC_VERSION}}, {{CONSTRAINTS}},
 # {{INTERFACES_OWNED}}, {{INTERFACES_CONSUMED}}, {{EVENTS_PUBLISHED}},

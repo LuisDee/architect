@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Generate compressed context header for a specific track.
+"""Generate compressed context header for a track's brief.md.
 
 Reads cross-cutting.md, interfaces.md, dependency-graph info from metadata,
 filters to only what's relevant for the given track, and outputs a context
 header that fits within a ~2000 token budget (~8000 chars). Falls back to
 a minimal header if the full version exceeds the budget.
+
+The context header is prepended to brief.md. When Conductor later generates
+spec.md, it preserves this header from the brief.
 
 Usage:
     python scripts/inject_context.py --track 04_api_core

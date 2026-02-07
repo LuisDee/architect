@@ -52,7 +52,7 @@ Q1: Does this affect multiple tracks or the whole system?
 
 A new track needs to be created. The work is substantial enough (5+ tasks) or distinct enough (different tech, different team concern) that it doesn't belong in an existing track.
 
-**Action during sync:** Generate spec.md, plan.md, metadata.json. Insert into DAG. Re-sequence waves.
+**Action during sync:** Generate brief.md and metadata.json. Insert into DAG. Re-sequence waves. Conductor generates spec.md and plan.md when the developer picks up the track.
 
 **Examples:**
 

@@ -47,15 +47,14 @@ Use these templates when generating project artifacts. Each template contains pl
 
 | Template | Generates |
 |----------|-----------|
-| `templates/context-header.md` | Compressed context header for spec.md (~2000 tokens) |
+| `templates/context-header.md` | Compressed context header for brief.md (~2000 tokens) |
 | `templates/context-header-minimal.md` | Emergency fallback header (~500 tokens) |
 | `templates/architecture.md` | `architect/architecture.md` — component map + ADRs |
 | `templates/cross-cutting.md` | `architect/cross-cutting.md` — versioned behavioral constraints |
 | `templates/interfaces.md` | `architect/interfaces.md` — track-to-track API/event contracts |
 | `templates/dependency-graph.md` | `architect/dependency-graph.md` — track dependency DAG |
 | `templates/execution-sequence.md` | `architect/execution-sequence.md` — wave ordering |
-| `templates/track-spec.md` | `conductor/tracks/<id>/spec.md` per track |
-| `templates/track-plan.md` | `conductor/tracks/<id>/plan.md` per track |
+| `templates/track-brief.md` | `conductor/tracks/<id>/brief.md` per track — the handoff to Conductor |
 | `templates/track-metadata.json` | `conductor/tracks/<id>/metadata.json` per track |
 | `templates/patch-phase.md` | Retroactive compliance phase (injected into existing plans) |
 
@@ -73,7 +72,6 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
 | `scripts/check_conductor_compat.py` | Conductor format compatibility check | Before decompose |
 | `scripts/progress.py` | Complexity-weighted progress calculation | During status |
-| `scripts/regenerate_specs.py` | Regenerate spec files preserving USER ADDITIONS | During sync (CC changes) |
 
 ## System Overview
 
@@ -87,8 +85,9 @@ conductor/product-guidelines.md         architect/cross-cutting.md
 conductor/tech-stack.md       <-reads-  architect/interfaces.md
 conductor/workflow.md         <-marker- architect/dependency-graph.md
 conductor/tracks.md           <-writes- architect/execution-sequence.md
-conductor/tracks/<id>/spec.md <-writes- architect/hooks/*.md
-conductor/tracks/<id>/plan.md <-writes- architect/discovery/
+conductor/tracks/<id>/brief.md <-writes- architect/hooks/*.md
+conductor/tracks/<id>/spec.md  <-Conductor- architect/discovery/
+conductor/tracks/<id>/plan.md  <-Conductor-
 conductor/tracks/<id>/metadata.json     architect/references/*.md
 ```
 
@@ -104,7 +103,7 @@ Architect reads Conductor's files as input, writes Conductor-compatible tracks a
 2. **Ask for gaps** — key workflows, scale constraints, existing integrations
 3. **Architecture research** — extract signals, match to patterns (references/architecture-patterns.md), present 3-tier recommendations (strongly recommended / recommended / consider for later), developer accepts/rejects/modifies
 4. **Generate architecture** — architecture.md, cross-cutting.md v1, interfaces.md, dependency-graph.md, execution-sequence.md. REVIEW GATE: developer approves.
-5. **Generate all tracks** — for each track: spec.md (with context header), plan.md (with phases + validation), metadata.json. Update tracks.md. REVIEW GATE: developer approves.
+5. **Generate track briefs** — for each track: brief.md (scope, design decisions, constraints), metadata.json. Update tracks.md. REVIEW GATE: developer approves. Conductor generates spec.md and plan.md interactively at implementation time.
 6. **Install hooks** — copy hooks to `architect/hooks/`, add marker to workflow.md, initialize `architect/discovery/`
 
 ### Track State Machine
@@ -151,13 +150,13 @@ Hooks fire at specific points during Conductor's `/conductor:implement`:
 
 ### Context Headers
 
-Every `spec.md` starts with a compressed context header filtered to what THIS track needs:
+Every `brief.md` starts with a compressed context header filtered to what THIS track needs:
 - Applicable cross-cutting constraints
 - Interfaces owned/consumed
 - Direct dependencies
 - Hard cap: 2000 tokens (falls back to minimal template at 500 tokens)
 
-Manual additions in `<!-- USER ADDITIONS -->` zones survive regeneration.
+When Conductor generates spec.md, it preserves the context header from the brief.
 
 ### Architecture Research Tiers
 

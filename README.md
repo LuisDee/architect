@@ -169,6 +169,16 @@ Architect works with both Claude Code and Gemini CLI from a single repo.
 | Scripts | scripts/*.py | scripts/*.py (same) |
 | Templates | Shared | Shared |
 
+## Development
+
+After changing any command in `commands/*.md`, run the sync script to regenerate the Gemini CLI TOML commands:
+
+```bash
+scripts/sync-gemini-commands.sh
+```
+
+The script extracts the description and prompt body from each Markdown command, replaces `${CLAUDE_PLUGIN_ROOT}` with `${extensionPath}` and `$ARGUMENTS` with `{{args}}`, and writes the corresponding TOML file to `commands/architect/`.
+
 ## License
 
 MIT

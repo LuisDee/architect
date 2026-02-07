@@ -73,6 +73,7 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
 | `scripts/check_conductor_compat.py` | Conductor format compatibility check | Before decompose |
 | `scripts/progress.py` | Complexity-weighted progress calculation | During status |
+| `scripts/regenerate_specs.py` | Regenerate spec files preserving USER ADDITIONS | During sync (CC changes) |
 
 ## System Overview
 

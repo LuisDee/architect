@@ -13,11 +13,11 @@ If the marker is removed, hooks are disabled — graceful degradation.
 
 | # | Hook | When | Purpose |
 |---|------|------|---------|
-| 01 | constraint-update-check.md | Before starting ANY new phase | Detect mid-track cross-cutting version changes and adopt new constraints for remaining phases |
-| 02 | interface-verification.md | Before implementing code that consumes another track's API or events | Verify the contract matches reality and decide: trust, verify, or mock |
-| 03 | discovery-check.md | After completing each task | Identify emergent work: new tracks, extensions, dependencies, cross-cutting changes |
-| 04 | phase-validation.md | Before marking a phase complete | Verify cross-cutting compliance for all work done in this phase |
-| 05 | wave-sync.md | After marking a track complete | Process discoveries, run quality gate, advance to next wave |
+| 01 | 01-constraint-update-check.md | Before starting ANY new phase | Detect mid-track cross-cutting version changes and adopt new constraints for remaining phases |
+| 02 | 02-interface-verification.md | Before implementing code that consumes another track's API or events | Verify the contract matches reality and decide: trust, verify, or mock |
+| 03 | 03-discovery-check.md | After completing each task | Identify emergent work: new tracks, extensions, dependencies, cross-cutting changes |
+| 04 | 04-phase-validation.md | Before marking a phase complete | Verify cross-cutting compliance for all work done in this phase |
+| 05 | 05-wave-sync.md | After marking a track complete | Process discoveries, run quality gate, advance to next wave |
 
 ## Quick Reference
 

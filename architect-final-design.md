@@ -90,8 +90,14 @@ project/
 │   └── templates/                         # Track generation templates
 │       ├── context-header.md              # Compressed context header (~<2000 tokens)
 │       ├── context-header-minimal.md      # Emergency fallback (<500 tokens)
+│       ├── architecture.md                # architect/architecture.md template
+│       ├── cross-cutting.md               # architect/cross-cutting.md template
+│       ├── interfaces.md                  # architect/interfaces.md template
+│       ├── dependency-graph.md            # architect/dependency-graph.md template
+│       ├── execution-sequence.md          # architect/execution-sequence.md template
 │       ├── track-spec.md
 │       ├── track-plan.md
+│       ├── track-metadata.json            # Per-track metadata template
 │       └── patch-phase.md                # Template for retroactive compliance phases
 │
 ├── conductor/                             # Conductor's artifacts

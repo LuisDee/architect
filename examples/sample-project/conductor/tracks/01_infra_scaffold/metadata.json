@@ -1,0 +1,24 @@
+{
+  "track_id": "01_infra_scaffold",
+  "state": "NOT_STARTED",
+  "complexity": "M",
+  "wave": 1,
+
+  "cc_version_at_start": null,
+  "cc_version_current": "v1",
+
+  "dependencies": [],
+  "interfaces_owned": ["Docker Compose services", "CI/CD pipeline", "Makefile", "backend/common/"],
+  "interfaces_consumed": [],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "test_command": "make test",
+  "test_timeout_seconds": 300,
+
+  "patches": [],
+
+  "started_at": null,
+  "completed_at": null
+}

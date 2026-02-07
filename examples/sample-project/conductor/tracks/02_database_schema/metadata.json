@@ -1,0 +1,24 @@
+{
+  "track_id": "02_database_schema",
+  "state": "NOT_STARTED",
+  "complexity": "M",
+  "wave": 2,
+
+  "cc_version_at_start": null,
+  "cc_version_current": "v1",
+
+  "dependencies": ["01_infra_scaffold"],
+  "interfaces_owned": ["SQLAlchemy models", "Alembic migrations", "Outbox table", "DB session factory"],
+  "interfaces_consumed": ["Docker Compose PostgreSQL"],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "test_command": "pytest backend/tests/track_02/ -v",
+  "test_timeout_seconds": 120,
+
+  "patches": [],
+
+  "started_at": null,
+  "completed_at": null
+}

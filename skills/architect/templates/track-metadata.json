@@ -1,0 +1,24 @@
+{
+  "track_id": "04_api_core",
+  "state": "NOT_STARTED",
+  "complexity": "XL",
+  "wave": 4,
+
+  "cc_version_at_start": null,
+  "cc_version_current": "v1",
+
+  "dependencies": ["01_infra_scaffold", "02_database_schema", "03_auth"],
+  "interfaces_owned": ["/v1/resources", "/v1/resources/{id}"],
+  "interfaces_consumed": ["/v1/auth/me"],
+
+  "events_published": ["resource.created", "resource.updated", "resource.deleted"],
+  "events_consumed": ["user.deleted"],
+
+  "test_command": "pytest backend/tests/track_04/ -v",
+  "test_timeout_seconds": 300,
+
+  "patches": [],
+
+  "started_at": null,
+  "completed_at": null
+}

@@ -78,11 +78,19 @@ def extract_constraints_for_track(cc_text: str, track_id: str) -> list[str]:
         elif current_concern and line.startswith("- Applies to:"):
             scope = line.split(":", 1)[1].strip()
             # Check if this constraint applies to our track
-            applies = (
-                scope.upper() == "ALL"
-                or "ALL" in scope.upper()
-                or track_id in scope
-            )
+            # Extract specific track refs from scope (e.g., "Tracks 04, 05, 06")
+            track_refs = re.findall(r"\b(\d{2}_\w+)\b", scope)
+            paren_track_nums = re.findall(r"Tracks?\s+([\d,\s]+)", scope)
+            if paren_track_nums:
+                nums = re.findall(r"\d{2}", paren_track_nums[0])
+                applies = any(
+                    track_id.startswith(n + "_") or track_id == n
+                    for n in nums
+                )
+            elif track_refs:
+                applies = track_id in track_refs
+            else:
+                applies = True  # Universal scope
             if not applies:
                 # Skip this concern for this track
                 current_concern = None

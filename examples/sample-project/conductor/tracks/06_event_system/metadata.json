@@ -1,0 +1,22 @@
+{
+  "track_id": "06_event_system",
+  "status": "new",
+  "complexity": "M",
+  "wave": 2,
+
+  "cc_version_at_brief": null,
+  "cc_version_current": "v1",
+
+  "dependencies": ["01_infra_scaffold"],
+  "interfaces_owned": ["Celery worker config", "Outbox relay", "Redis pub/sub", "Cache-aside"],
+  "interfaces_consumed": ["Docker Compose Redis"],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "patches": [],
+
+  "created_at": "2025-01-15T10:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

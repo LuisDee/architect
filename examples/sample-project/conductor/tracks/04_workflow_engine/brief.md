@@ -1,5 +1,17 @@
 <!-- ARCHITECT CONTEXT | Track: 04_workflow_engine | Wave: 3 | CC: v1 -->
 
+## Cross-Cutting Constraints
+- Transactional Outbox: All domain events through outbox table
+- Observability: OTel traces on all execution steps
+- Testing: TDD, 80% coverage minimum
+## Interfaces
+Owns: Workflow execution engine, step runner, lifecycle events
+Consumes: Database session (Track 02), Celery worker config (Track 06), Outbox table (Track 02)
+## Dependencies
+02_database_schema, 06_event_system
+
+<!-- END ARCHITECT CONTEXT -->
+
 # Track 04: Workflow Execution Engine
 
 ## What This Track Delivers

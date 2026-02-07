@@ -57,11 +57,11 @@ Wave N: [LABEL] — XX% complete
 ```
 
 Use state indicators:
-- COMPLETE tracks: mark as done
-- IN_PROGRESS: show phase completion (e.g., "Phase 2/4")
-- NOT_STARTED: show as pending
-- NEEDS_PATCH: show patch status
-- PAUSED: show reason if available
+- "completed" tracks: mark as done
+- "in_progress": show phase completion (e.g., "Phase 2/4")
+- "new": show as pending
+- "needs_patch": show patch status
+- "paused": show reason if available
 
 ### Pending Discoveries
 ```

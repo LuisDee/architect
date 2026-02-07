@@ -8,6 +8,14 @@ Run this once after `/conductor:setup`. Re-run after major pivots.
 
 ---
 
+## Context Optimization Strategy
+
+This command uses **sub-agent dispatch** to keep the orchestrator's context lean. Heavy operations (reference file reading, codebase exploration, per-track brief generation) run in isolated sub-agent contexts. The orchestrator only sees structured summaries.
+
+**Platform detection:** If the Task tool is available (Claude Code), spawn sub-agents in parallel. If not (Gemini CLI or no sub-agent support), perform steps sequentially in the current context.
+
+---
+
 ## Step 1: Pre-Flight Checks
 
 1. **Check for Conductor directory:**
@@ -51,17 +59,11 @@ Do NOT ask about things already covered in the Conductor files. Summarize what y
 
 ---
 
-## Step 3: Architecture Research
+## Step 3: Architecture Research (Context-Optimized)
 
 This is where Architect adds unique value. You identify patterns the developer may not have considered.
 
-### 3a. Read the Knowledge Base
-
-Read the built-in references:
-- `${extensionPath}/skills/architect/references/architecture-patterns.md`
-- `${extensionPath}/skills/architect/references/cross-cutting-catalog.md`
-
-### 3b. Extract Architectural Signals
+### 3a. Extract Signals (Orchestrator — lightweight)
 
 Read ALL project inputs (product.md, tech-stack.md, developer answers, product-guidelines.md) and extract architectural signals — phrases, requirements, or characteristics that imply specific patterns.
 
@@ -74,21 +76,55 @@ Signals extracted:
 - "external API calls" to payment provider → Circuit Breaker
 ```
 
-### 3c. Match Signals to Patterns
+### 3b. Dispatch Research Sub-Agents
 
-For each signal, look up the matching pattern in architecture-patterns.md. Verify:
-- Do the signals genuinely match? (Avoid false positives)
-- Is the "when NOT to use" applicable here?
-- What tier does it fall into given signal strength?
+**Parallel execution (if Task tool is available — Claude Code):**
+
+Spawn the following sub-agents IN PARALLEL using the Task tool:
+
+1. **pattern-matcher** (agent: `${extensionPath}/agents/pattern-matcher.md`):
+   - Input: The extracted signals from Step 3a, plus tech stack summary
+   - Returns: Structured pattern matches with tiers + cross-cutting concern evaluation
+
+2. **codebase-analyzer** (agent: `${extensionPath}/agents/codebase-analyzer.md`):
+   - Input: Project root path + tech stack summary from tech-stack.md
+   - Returns: Structured codebase map with components, dependencies, and architectural signals
+
+Wait for both sub-agents to return their structured summaries.
+
+**Sequential fallback (if Task tool is unavailable — Gemini CLI):**
+
+Perform these steps sequentially in the current context:
+
+1. Read the reference files:
+   - `${extensionPath}/skills/architect/references/architecture-patterns.md`
+   - `${extensionPath}/skills/architect/references/cross-cutting-catalog.md`
+
+2. For each signal, look up matching patterns in architecture-patterns.md. Verify:
+   - Do the signals genuinely match? (Avoid false positives)
+   - Is the "when NOT to use" applicable here?
+   - What tier does it fall into given signal strength?
+
+3. Walk through the cross-cutting catalog:
+   - Evaluate EVERY item in the "Always" section
+   - Evaluate "If multi-service" items if architecture has 2+ services
+   - Evaluate "If user-facing" items if end users interact with the system
+   - Evaluate "If data-heavy" items if significant data persistence is involved
+
+4. Explore the codebase to map structure, components, and dependencies.
+
+### 3c. Synthesize Results
+
+Combine the sub-agent summaries (or sequential results) into a unified recommendation set. Merge any overlapping signals from the codebase analysis with the pattern matching results.
 
 ### 3d. Research (if tools available)
 
 Check which research tools are available and use them to enrich recommendations:
 
-1. **Context7 MCP** (if configured) — Look up implementation specifics for the project's tech stack. Example: "How to implement outbox pattern in SQLAlchemy 2.0?"
-2. **Web search** (if available) — Compare current best practices. Example: "Redis Streams vs RabbitMQ for job queues 2026"
-3. **Deep Research skill** (if configured) — For complex decisions with many viable options.
-4. **Existing skills/plugins** — Check if relevant skills already exist before planning to build.
+1. **Context7 MCP** (if configured) — Look up implementation specifics for the project's tech stack
+2. **Web search** (if available) — Compare current best practices
+3. **Deep Research skill** (if configured) — For complex decisions with many viable options
+4. **Existing skills/plugins** — Check if relevant skills already exist before planning to build
 
 If no external tools are available, the built-in knowledge base is sufficient for solid recommendations.
 
@@ -120,9 +156,11 @@ Confirm: "These are the accepted patterns and cross-cutting concerns. Ready to g
 
 ---
 
-## Step 4: Generate Architecture
+## Step 4: Generate Architecture (Write-to-Disk, Summarize-Back)
 
 Read templates from `${extensionPath}/skills/architect/templates/` and generate the architecture artifacts.
+
+**Context optimization:** Write each artifact directly to disk. Keep only a ONE-LINE SUMMARY of each artifact in the conversation. Do NOT keep the full artifact content in context after writing.
 
 ### 4a. Create architect/ directory structure
 ```
@@ -140,20 +178,18 @@ Include:
 - Accepted patterns table with tiers
 - Deferred pattern triggers (for "Consider for Later" patterns)
 
+Write to disk, then report: `"Generated architecture.md — [N] components, [N] ADRs, [N] accepted patterns"`
+
 ### 4c. Generate architect/cross-cutting.md
 Using template: `${extensionPath}/skills/architect/templates/cross-cutting.md`
 
-Walk through the cross-cutting catalog (`${extensionPath}/skills/architect/references/cross-cutting-catalog.md`):
-- Evaluate EVERY item in the "Always" section
-- Evaluate "If multi-service" items if the architecture has 2+ services
-- Evaluate "If user-facing" items if end users interact with the system
-- Evaluate "If data-heavy" items if significant data persistence is involved
-
-For each applicable item, write a concrete constraint (not generic). Example:
+Walk through the cross-cutting evaluation results (from Step 3). For each applicable item, write a concrete constraint (not generic). Example:
 - Good: "structlog for Python, JSON format, trace_id in every log line"
 - Bad: "use structured logging"
 
 Tag as v1 (Wave 1).
+
+Write to disk, then report: `"Generated cross-cutting.md — [N] constraints in v1"`
 
 ### 4d. Generate architect/interfaces.md
 Using template: `${extensionPath}/skills/architect/templates/interfaces.md`
@@ -162,6 +198,8 @@ Define track-to-track contracts:
 - REST endpoints: method, path, request/response schemas, auth requirements
 - Event contracts: event name, payload schema, when published
 - Shared data schemas: field names, types, owned-by
+
+Write to disk, then report: `"Generated interfaces.md — [N] endpoints, [N] event contracts"`
 
 ### 4e. Generate architect/dependency-graph.md
 Using template: `${extensionPath}/skills/architect/templates/dependency-graph.md`
@@ -173,6 +211,8 @@ python ${extensionPath}/scripts/validate_dag.py --tracks-dir conductor/tracks
 
 If cycles detected, restructure until the graph is acyclic.
 
+Write to disk, then report: `"Generated dependency-graph.md — [N] tracks, [N] edges, 0 cycles"`
+
 ### 4f. Generate architect/execution-sequence.md
 Using template: `${extensionPath}/skills/architect/templates/execution-sequence.md`
 
@@ -183,13 +223,22 @@ python ${extensionPath}/scripts/topological_sort.py --tracks-dir conductor/track
 
 Write wave-by-wave sequence with completion criteria per wave.
 
+Write to disk, then report: `"Generated execution-sequence.md — [N] waves"`
+
+### Summary after Step 4
+
+Present the collected one-line summaries to the developer:
+```
+Architecture artifacts generated:
+- architecture.md — 4 components, 3 ADRs, 2 accepted patterns
+- cross-cutting.md — 12 constraints in v1
+- interfaces.md — 8 endpoints, 3 event contracts
+- dependency-graph.md — 15 tracks, 22 edges, 0 cycles
+- execution-sequence.md — 4 waves
+```
+
 ### REVIEW GATE 2: Architecture Approval
-Present the complete architecture to the developer:
-- Component map
-- Cross-cutting constraints (v1)
-- Interface contracts
-- Track list with wave assignments
-- Dependency graph
+Present the architecture summary to the developer. They can read any artifact from disk for details.
 
 Ask: "Does this architecture look right? Any changes before I generate track briefs?"
 
@@ -197,7 +246,7 @@ Wait for developer approval before proceeding.
 
 ---
 
-## Step 5: Generate Track Briefs
+## Step 5: Generate Track Briefs (Context-Optimized)
 
 > **Critical: Brief vs Spec**
 >
@@ -224,16 +273,59 @@ Wait for developer approval before proceeding.
 > The developer makes design choices when Conductor asks them during implementation.
 > Your job is to identify WHAT needs deciding, not to decide it.
 
+### 5a. Prepare Context Bundles
+
+For each track in execution sequence order, run `prepare_brief_context.py`. On first generation (when `metadata.json` does not yet exist), pass track details via CLI arguments:
+
+```bash
+python ${extensionPath}/scripts/prepare_brief_context.py \
+    --track <track_id> \
+    --tracks-dir conductor/tracks \
+    --architect-dir architect \
+    --track-name "<human readable name>" \
+    --wave <N> \
+    --complexity <S|M|L|XL> \
+    --description "<one-line description>" \
+    --dependencies <dep_track_id> ... \
+    --interfaces-owned "<interface>" ... \
+    --interfaces-consumed "<interface>" ... \
+    --events-published "<event>" ... \
+    --events-consumed "<event>" ...
+```
+
+On subsequent runs (when `metadata.json` exists), the CLI overrides can be omitted — the script reads from the file:
+```bash
+python ${extensionPath}/scripts/prepare_brief_context.py --track <track_id> --tracks-dir conductor/tracks --architect-dir architect
+```
+
+This produces a filtered JSON context bundle containing only the constraints, interfaces, dependencies, and architecture excerpt relevant to that specific track.
+
+### 5b. Generate Briefs
+
+**Parallel execution (if Task tool is available — Claude Code):**
+
+Spawn **brief-generator** sub-agents (agent: `${extensionPath}/agents/brief-generator.md`) in batches of 3-5 at a time:
+
+For each batch:
+1. Prepare context bundles for each track in the batch (Step 5a)
+2. Spawn one brief-generator sub-agent per track, passing:
+   - The JSON context bundle from `prepare_brief_context.py`
+   - The plugin root path: `${extensionPath}`
+   - The output directory: `conductor/tracks/<track_id>/`
+3. Each sub-agent writes `brief.md` + `metadata.json` directly to disk
+4. Each sub-agent returns a one-line summary
+5. Collect summaries before spawning the next batch
+
+**Sequential fallback (if Task tool is unavailable — Gemini CLI):**
+
 For each track in execution sequence order:
-
-### 5a. Generate conductor/tracks/<track_id>/brief.md
-
-1. Generate context header:
+1. Run `prepare_brief_context.py` to get the context bundle
+2. Run `inject_context.py` to generate the context header:
    ```bash
    python ${extensionPath}/scripts/inject_context.py --track <track_id> --tracks-dir conductor/tracks --architect-dir architect
    ```
-2. Read template: `${extensionPath}/skills/architect/templates/track-brief.md`
-3. Fill in:
+3. Read template: `${extensionPath}/skills/architect/templates/track-brief.md`
+4. Generate brief.md:
    - **What This Track Delivers** — one paragraph: what, why, where in system
    - **Scope IN** — concrete boundaries of what's included
    - **Scope OUT** — what's excluded with pointers to where it lives
@@ -241,28 +333,58 @@ For each track in execution sequence order:
    - **Architectural Notes** — integration points, cross-track impacts, gotchas from the architecture analysis
    - **Complexity** — S/M/L/XL
    - **Estimated Phases** — advisory count for Conductor's planning
-4. Write to `conductor/tracks/<track_id>/brief.md`
+5. Write to `conductor/tracks/<track_id>/brief.md`
+6. Generate and write `conductor/tracks/<track_id>/metadata.json`:
+   - Read template: `${extensionPath}/skills/architect/templates/track-metadata.json`
+   - Fill in: track_id, status ("new"), complexity (S/M/L/XL), wave, cc_version_at_brief (v1), cc_version_current (v1), dependencies, interfaces_owned, interfaces_consumed, created_at (ISO 8601 timestamp)
+   - Note: `test_command` and `test_timeout_seconds` are NOT set here. Conductor adds these when it generates the implementation plan.
 
 **Do NOT generate spec.md or plan.md.** Conductor generates these interactively with the developer during `/conductor:implement`.
 
-### 5b. Generate conductor/tracks/<track_id>/metadata.json
-
-1. Read template: `${extensionPath}/skills/architect/templates/track-metadata.json`
-2. Fill in: track_id, state (NOT_STARTED), complexity (S/M/L/XL), wave, cc_version_at_brief (v1), cc_version_current (v1), dependencies, interfaces_owned, interfaces_consumed, created_at (ISO 8601 timestamp)
-3. Write to `conductor/tracks/<track_id>/metadata.json`
-
-Note: `test_command` and `test_timeout_seconds` are NOT set here. Conductor adds these when it generates the implementation plan, since Conductor knows the test framework.
-
 ### 5c. Update conductor/tracks.md
 
-After generating all tracks, update (or create) `conductor/tracks.md` as the track registry. Format:
-```markdown
-# Tracks
+After generating all tracks, update (or create) `conductor/tracks.md` as the track registry. Use Conductor's expected format — each track as a section with checkbox status:
 
-| ID | Name | Wave | Complexity | Status | Dependencies |
-|----|------|------|------------|--------|-------------|
-| 01_infra_scaffold | Infrastructure Scaffold | 1 | M | not started | — |
-| ... | ... | ... | ... | ... | ... |
+```markdown
+# Project Tracks
+
+> Generated by Architect. {N} tracks across {M} waves.
+> Run /conductor:implement to begin.
+
+---
+
+## [ ] Track: {track_name}
+- **ID:** {track_id}
+- **Wave:** {wave_number}
+- **Complexity:** {S|M|L|XL}
+- **Dependencies:** {comma-separated dependency IDs, or "None"}
+
+---
+
+## [ ] Track: {next_track_name}
+...
+```
+
+**Status checkbox mapping (Conductor convention):**
+- `[ ]` = not started (Architect always writes this)
+- `[~]` = in progress (set by Conductor during implementation)
+- `[x]` = complete (set by Conductor after all phases done)
+
+Architect ONLY writes `[ ]`. Conductor manages all status transitions.
+
+### 5d. Present Track Summary
+
+Collect the one-line summaries from all brief generators (or from sequential generation) and present:
+
+```
+Track briefs generated:
+- 01_infra_scaffold — Wave 1, Complexity M, 4 design decisions
+- 02_data_models — Wave 1, Complexity L, 6 design decisions
+- 03_auth — Wave 2, Complexity M, 5 design decisions
+- ...
+
+Total: [N] tracks across [N] waves
+Complexity distribution: [N]×S, [N]×M, [N]×L, [N]×XL
 ```
 
 ### REVIEW GATE 3: Track Brief Approval
@@ -275,7 +397,7 @@ Present the track list summary to the developer:
 
 Ask: "These are the track briefs. Any adjustments before I finalize?"
 
-Wait for approval. Then write all brief and metadata files.
+Wait for approval. Then confirm all brief and metadata files have been written.
 
 ---
 
@@ -334,11 +456,11 @@ If `architect/` already exists and tracks are in various states, classify each:
 
 | Track State | Affected by Pivot? | Action |
 |-------------|-------------------|--------|
-| COMPLETE | No | FREEZE — no changes |
-| COMPLETE | Yes | Generate patch phase in plan.md (Conductor already generated it) |
-| IN_PROGRESS | No | FREEZE_AFTER_COMPLETION — let it finish |
-| IN_PROGRESS | Yes | PAUSE — present options to developer |
-| NOT_STARTED | Affected | REGENERATE — new brief.md |
+| completed | No | FREEZE — no changes |
+| completed | Yes | Generate patch phase in plan.md (Conductor already generated it) |
+| in_progress | No | FREEZE_AFTER_COMPLETION — let it finish |
+| in_progress | Yes | PAUSE — present options to developer |
+| new | Affected | REGENERATE — new brief.md |
 | (new) | — | GENERATE — create brief.md from scratch |
 
 Rebuild dependency graph around frozen tracks. Re-sequence waves.

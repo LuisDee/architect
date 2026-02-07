@@ -1,0 +1,13 @@
+{
+  "track_id": "99_manual_track",
+  "status": "new",
+  "complexity": "S",
+  "wave": 1,
+  "dependencies": [],
+  "interfaces_owned": [],
+  "interfaces_consumed": [],
+  "patches": [],
+  "created_at": "2026-02-07T14:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

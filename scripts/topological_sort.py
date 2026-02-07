@@ -142,7 +142,7 @@ def main():
             wave_info["complexity"].append({
                 "track_id": tid,
                 "complexity": t.get("complexity", "M"),
-                "state": t.get("state", "UNKNOWN"),
+                "status": t.get("status", "unknown"),
             })
         result_waves.append(wave_info)
 

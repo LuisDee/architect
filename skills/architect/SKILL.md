@@ -31,6 +31,17 @@ After Architect runs, the developer lives entirely in Conductor. Architect's val
 
 Command definitions live in `commands/architect-decompose.md`, `commands/architect-sync.md`, and `commands/architect-status.md`.
 
+## Agents (Sub-Agent Dispatch for Context Optimization)
+
+The decompose command uses specialized sub-agents to keep context lean on Claude Code. On Gemini CLI, the same logic runs sequentially.
+
+| Agent | Purpose | When Spawned |
+|-------|---------|-------------|
+| `agents/architect-expert.md` | Main orchestrator / solo executor | Spawned by Claude Code for decomposition tasks |
+| `agents/pattern-matcher.md` | Reads reference files, matches signals to patterns | During architecture research (Step 3) — parallel with codebase-analyzer |
+| `agents/codebase-analyzer.md` | Explores codebase, maps structure and dependencies | During architecture research (Step 3) — parallel with pattern-matcher |
+| `agents/brief-generator.md` | Generates one track's brief.md + metadata.json | During track generation (Step 5) — batches of 3-5 in parallel |
+
 ## References (Read Before Generating Architecture)
 
 These files contain the built-in knowledge base. Read them before making architectural decisions.
@@ -72,6 +83,7 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
 | `scripts/check_conductor_compat.py` | Conductor format compatibility check | Before decompose |
 | `scripts/progress.py` | Complexity-weighted progress calculation | During status |
+| `scripts/prepare_brief_context.py` | Prepare filtered context bundle per track | During decompose (Step 5) |
 
 ## System Overview
 
@@ -94,32 +106,38 @@ conductor/tracks/<id>/metadata.json     architect/references/*.md
 Architect reads Conductor's files as input, writes Conductor-compatible tracks as output. The single integration point in `workflow.md` is a marker line:
 
 ```
-<!-- ARCHITECT:HOOKS -- Read architect/hooks/*.md for additional workflow steps -->
+<!-- ARCHITECT:HOOKS — Read architect/hooks/*.md for additional workflow steps -->
 ```
 
-### Decompose Flow (Primary Command)
+### Decompose Flow (Primary Command — Context-Optimized)
 
-1. **Read Conductor files** — product.md, tech-stack.md, workflow.md, product-guidelines.md
+1. **Pre-flight + Read Conductor files** — product.md, tech-stack.md, workflow.md, product-guidelines.md
 2. **Ask for gaps** — key workflows, scale constraints, existing integrations
-3. **Architecture research** — extract signals, match to patterns (references/architecture-patterns.md), present 3-tier recommendations (strongly recommended / recommended / consider for later), developer accepts/rejects/modifies
-4. **Generate architecture** — architecture.md, cross-cutting.md v1, interfaces.md, dependency-graph.md, execution-sequence.md. REVIEW GATE: developer approves.
-5. **Generate track briefs** — for each track: brief.md (scope, design decisions, constraints), metadata.json. Update tracks.md. REVIEW GATE: developer approves. Conductor generates spec.md and plan.md interactively at implementation time.
+3. **Architecture research (sub-agent dispatch)** — extract signals from conductor files, then:
+   - **Claude Code (parallel):** Spawn pattern-matcher + codebase-analyzer sub-agents in parallel. Pattern-matcher reads reference files and matches signals. Codebase-analyzer maps project structure. Orchestrator receives structured summaries only.
+   - **Gemini CLI (sequential):** Read reference files and explore codebase directly in current context.
+   - Synthesize results, present 3-tier recommendations, developer accepts/rejects/modifies. REVIEW GATE 1.
+4. **Generate architecture (write-to-disk, summarize-back)** — Generate each artifact, write directly to disk, keep only one-line summary in context (e.g., "Generated architecture.md — 4 components, 3 ADRs"). REVIEW GATE 2.
+5. **Generate track briefs (sub-agent dispatch)** — For each track, run prepare_brief_context.py to create filtered context bundle, then:
+   - **Claude Code (parallel):** Spawn brief-generator sub-agents in batches of 3-5. Each writes brief.md + metadata.json to disk and returns one-line summary.
+   - **Gemini CLI (sequential):** Generate briefs one at a time in current context.
+   - Update tracks.md. REVIEW GATE 3.
 6. **Install hooks** — copy hooks to `architect/hooks/`, add marker to workflow.md, initialize `architect/discovery/`
 
 ### Track State Machine
 
 ```
-NOT_STARTED --> IN_PROGRESS --> COMPLETE
-                    |               |
-                    v               v
-                  PAUSED      NEEDS_PATCH --> IN_PROGRESS
+new --> in_progress --> completed
+            |               |
+            v               v
+          paused      needs_patch --> in_progress
 ```
 
-- NOT_STARTED: context header regenerated on CC changes
-- IN_PROGRESS: picks up new cross-cutting constraints via phase hooks
-- COMPLETE: frozen unless new CC version triggers NEEDS_PATCH
-- PAUSED: pivot or blocker; resumes to IN_PROGRESS
-- NEEDS_PATCH: retroactive compliance phase injected, re-enters IN_PROGRESS
+- `new`: context header regenerated on CC changes
+- `in_progress`: picks up new cross-cutting constraints via phase hooks
+- `completed`: frozen unless new CC version triggers `needs_patch`
+- `paused`: pivot or blocker; resumes to `in_progress`
+- `needs_patch`: retroactive compliance phase injected, re-enters `in_progress`
 
 ### Cross-Cutting Concerns
 

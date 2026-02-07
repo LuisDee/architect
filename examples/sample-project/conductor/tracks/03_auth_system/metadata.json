@@ -1,0 +1,22 @@
+{
+  "track_id": "03_auth_system",
+  "status": "new",
+  "complexity": "L",
+  "wave": 3,
+
+  "cc_version_at_brief": null,
+  "cc_version_current": "v1",
+
+  "dependencies": ["01_infra_scaffold", "02_database_schema"],
+  "interfaces_owned": ["/v1/auth/*", "get_current_user middleware"],
+  "interfaces_consumed": ["User table schema", "Database session factory"],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "patches": [],
+
+  "created_at": "2025-01-15T10:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

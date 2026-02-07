@@ -66,12 +66,11 @@
 
 ---
 
-## Wave 4 — Integration & UI
+## Wave 4 — Integration
 
 | # | Track ID | Complexity | Description |
 |---|----------|------------|-------------|
 | 7 | 05_api_layer | L | REST endpoints for workflows, runs, webhooks, templates |
-| 8 | 07_react_frontend | XL | React UI, workflow builder (React Flow), run monitor, dashboard |
 
 ### Wave 4 Completion Criteria
 - [ ] All phases in all wave tracks marked complete
@@ -79,10 +78,24 @@
 - [ ] No BLOCKING discoveries in `architect/discovery/pending/`
 - [ ] All API endpoints match interface contracts in interfaces.md
 - [ ] Webhook ingestion accepts and triggers workflow execution
+- [ ] All patches with `blocks_wave == 4` are COMPLETE
+
+---
+
+## Wave 5 — UI
+
+| # | Track ID | Complexity | Description |
+|---|----------|------------|-------------|
+| 8 | 07_react_frontend | XL | React UI, workflow builder (React Flow), run monitor, dashboard |
+
+### Wave 5 Completion Criteria
+- [ ] All phases in all wave tracks marked complete
+- [ ] All track tests passing
+- [ ] No BLOCKING discoveries in `architect/discovery/pending/`
 - [ ] React app renders all pages, workflow builder creates valid workflows
 - [ ] Run monitoring shows live step-by-step status (polling)
 - [ ] End-to-end flow works: create workflow in UI → trigger → monitor completion
-- [ ] All patches with `blocks_wave == 4` are COMPLETE
+- [ ] All patches with `blocks_wave == 5` are COMPLETE
 
 ---
 
@@ -90,9 +103,10 @@
 
 | Wave | Tracks | Total Complexity | Status |
 |------|--------|-----------------|--------|
-| 1 | 2 | 3 (M+S) | NOT_STARTED |
-| 2 | 2 | 4 (M+M) | NOT_STARTED |
-| 3 | 2 | 7 (L+XL) | NOT_STARTED |
-| 4 | 2 | 7 (L+XL) | NOT_STARTED |
+| 1 | 2 | 3 (M+S) | new |
+| 2 | 2 | 4 (M+M) | new |
+| 3 | 2 | 7 (L+XL) | new |
+| 4 | 1 | 3 (L) | new |
+| 5 | 1 | 4 (XL) | new |
 
 Overall: 0/21 complexity-weighted units complete (0%)

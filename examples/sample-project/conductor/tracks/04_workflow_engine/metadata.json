@@ -1,0 +1,22 @@
+{
+  "track_id": "04_workflow_engine",
+  "status": "new",
+  "complexity": "XL",
+  "wave": 3,
+
+  "cc_version_at_brief": null,
+  "cc_version_current": "v1",
+
+  "dependencies": ["02_database_schema", "06_event_system"],
+  "interfaces_owned": ["Workflow execution engine", "Step runner"],
+  "interfaces_consumed": ["Database session factory", "Celery worker config", "Outbox table"],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "patches": [],
+
+  "created_at": "2025-01-15T10:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

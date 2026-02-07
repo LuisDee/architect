@@ -1,0 +1,21 @@
+{
+  "track_id": "03_data_layer",
+  "status": "new",
+  "complexity": "XL",
+  "wave": 2,
+  "cc_version_at_brief": "v1.0",
+  "cc_version_current": "v1.0",
+  "dependencies": [
+    "01_infra_scaffold"
+  ],
+  "interfaces_owned": [
+    "IDataAccess"
+  ],
+  "interfaces_consumed": [
+    "IInfraConfig"
+  ],
+  "patches": [],
+  "created_at": "2026-02-07T12:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

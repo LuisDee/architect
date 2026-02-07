@@ -66,7 +66,7 @@ A new track needs to be created. The work is substantial enough (5+ tasks) or di
 
 A small addition (< 5 tasks) to an existing track, using the same technology and fitting naturally into its scope. Becomes a patch phase in the track's plan.md.
 
-**Action during sync:** Append a new phase to the existing track's plan.md. If track is COMPLETE, set state to NEEDS_PATCH.
+**Action during sync:** Append a new phase to the existing track's plan.md. If track is "completed", set status to "needs_patch".
 
 **Examples:**
 
@@ -94,7 +94,7 @@ A dependency between tracks that wasn't captured in the original DAG. Track A ne
 
 A behavioral rule or constraint that applies across multiple tracks. Gets version-appended to `architect/cross-cutting.md`.
 
-**Action during sync:** Version-append to cross-cutting.md. NOT_STARTED tracks get regenerated headers. IN_PROGRESS tracks pick up via constraint-update-check hook. COMPLETE tracks get NEEDS_PATCH state with a patch phase.
+**Action during sync:** Version-append to cross-cutting.md. "new" tracks get regenerated headers. "in_progress" tracks pick up via constraint-update-check hook. "completed" tracks get "needs_patch" status with a patch phase.
 
 **Examples:**
 

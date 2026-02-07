@@ -282,7 +282,7 @@ Step 5: Validate wave completion (if triggered by wave boundary)
 ```json
 {
   "track_id": "04_api_core",
-  "state": "COMPLETE",
+  "status": "completed",
   "complexity": "XL",
   "wave": 4,
 

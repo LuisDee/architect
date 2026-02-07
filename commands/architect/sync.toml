@@ -57,7 +57,7 @@ For each non-duplicate discovery, execute the appropriate action:
 1. Read the target track's plan.md
 2. Append a new phase using the patch-phase template: `${extensionPath}/skills/architect/templates/patch-phase.md`
 3. Update metadata.json: add entry to patches array
-4. If track state is COMPLETE, update state to NEEDS_PATCH
+4. If track status is "completed", update status to "needs_patch"
 
 **NEW_DEPENDENCY:**
 1. Validate the edge won't create a cycle:
@@ -74,10 +74,10 @@ For each non-duplicate discovery, execute the appropriate action:
 **CROSS_CUTTING_CHANGE:**
 1. Version-append to architect/cross-cutting.md (next version number)
 2. Build retroactive compliance table:
-   - NOT_STARTED tracks: will auto-inherit via context header regeneration
-   - IN_PROGRESS tracks: will pick up via constraint-update-check hook
-   - COMPLETE tracks: generate patch phase, set state to NEEDS_PATCH
-3. Regenerate context headers in brief.md for NOT_STARTED tracks:
+   - "new" tracks: will auto-inherit via context header regeneration
+   - "in_progress" tracks: will pick up via constraint-update-check hook
+   - "completed" tracks: generate patch phase, set status to "needs_patch"
+3. Regenerate context headers in brief.md for "new" tracks:
    ```bash
    python ${extensionPath}/scripts/inject_context.py --track all --tracks-dir conductor/tracks --architect-dir architect
    ```
@@ -114,7 +114,7 @@ python ${extensionPath}/scripts/sync_check.py --tracks-dir conductor/tracks --ar
 Review results:
 
 - **Interface mismatches:** Interfaces declared in interfaces.md but not in metadata, or vice versa. Present each for resolution.
-- **CC version drift:** Tracks running against stale CC versions. IN_PROGRESS tracks should have picked up changes via Hook 01. COMPLETE tracks need patches.
+- **CC version drift:** Tracks running against stale CC versions. "in_progress" tracks should have picked up changes via Hook 01. "completed" tracks need patches.
 - **Orphaned interfaces:** Tracks claiming interfaces not documented in interfaces.md. Add to interfaces.md or remove from metadata.
 - **Consumed-but-unowned:** A track consumes an interface no other track owns. This is a missing dependency.
 

@@ -1,4 +1,15 @@
-<!-- ARCHITECT CONTEXT | Track: 07_react_frontend | Wave: 4 | CC: v1 -->
+<!-- ARCHITECT CONTEXT | Track: 07_react_frontend | Wave: 5 | CC: v1 -->
+
+## Cross-Cutting Constraints
+- Testing: Vitest, 80% coverage minimum
+- API Conventions: Consume envelope responses with cursor pagination
+## Interfaces
+Owns: React UI application
+Consumes: /v1/workflows, /v1/runs, /v1/auth/* (Track 05), /v1/auth/* (Track 03)
+## Dependencies
+05_api_layer
+
+<!-- END ARCHITECT CONTEXT -->
 
 # Track 07: React Frontend & Workflow Builder
 

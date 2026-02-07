@@ -18,11 +18,11 @@ Open `architect/interfaces.md` and find the section for the owning track. Note t
 - Endpoint path, method, request/response schema
 - OR event name, payload schema, publishing trigger
 
-### 3. Check the producer track's state
+### 3. Check the producer track's status
 
-Open `conductor/tracks/<producer_track>/metadata.json` and check `state`.
+Open `conductor/tracks/<producer_track>/metadata.json` and check `status`.
 
-### If producer is COMPLETE:
+### If producer is "completed":
 
 **Tier 1 — Integration tests exist:**
 Check if the producer track has integration tests that exercise the endpoint/event:
@@ -36,7 +36,7 @@ If no tests cover the contract, verify the implementation directly:
 - If they match → **proceed with confidence**
 - If they don't match → **log INTERFACE_MISMATCH discovery** (BLOCKING urgency)
 
-### If producer is IN_PROGRESS:
+### If producer is "in_progress":
 
 The producer hasn't finished yet. The contract in interfaces.md is the intended design.
 
@@ -45,7 +45,7 @@ The producer hasn't finished yet. The contract in interfaces.md is the intended 
 - Add a TODO comment: `# TODO: Validate against real endpoint when <producer_track> is complete`
 - This is expected and normal — the wave system is designed for this
 
-### If producer is NOT_STARTED:
+### If producer is "new":
 
 The producer doesn't exist yet.
 
@@ -61,7 +61,7 @@ In your implementation, add a brief comment noting which verification tier you u
 ```
 or
 ```python
-# Interface: /v1/resources (Track 04_api_core) — mocked, track IN_PROGRESS (Tier 3)
+# Interface: /v1/resources (Track 04_api_core) — mocked, track in_progress (Tier 3)
 ```
 
 ## When to Log Discoveries

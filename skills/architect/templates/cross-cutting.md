@@ -76,8 +76,8 @@
 ### Retroactive Compliance
 | Track | State at time of change | Action |
 |-------|-------------------------|--------|
-| {{TRACK}} | COMPLETE | PATCH_REQUIRED — Phase {{P_ID}} added to plan.md |
-| {{TRACK}} | IN_PROGRESS | MID_TRACK_ADOPTION via constraint-update-check hook |
-| {{TRACK}} | NOT_STARTED | AUTO_INHERIT via context header regeneration |
+| {{TRACK}} | completed | PATCH_REQUIRED — Phase {{P_ID}} added to plan.md |
+| {{TRACK}} | in_progress | MID_TRACK_ADOPTION via constraint-update-check hook |
+| {{TRACK}} | new | AUTO_INHERIT via context header regeneration |
 
 -->

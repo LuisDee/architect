@@ -127,7 +127,7 @@ FROM:
 ```json
 {
   "track_id": "...",
-  "state": "NOT_STARTED",
+  "status": "new",
   "complexity": "XL",
   "wave": 4,
   "cc_version_at_start": "v1.0",
@@ -147,7 +147,7 @@ TO:
 ```json
 {
   "track_id": "...",
-  "state": "NOT_STARTED",
+  "status": "new",
   "complexity": "XL",
   "wave": 4,
   "cc_version_at_brief": "v1.0",

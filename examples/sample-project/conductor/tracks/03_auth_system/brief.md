@@ -1,5 +1,17 @@
 <!-- ARCHITECT CONTEXT | Track: 03_auth_system | Wave: 3 | CC: v1 -->
 
+## Cross-Cutting Constraints
+- Error Handling: RFC 7807 Problem Details for all API errors
+- Testing: TDD, 80% coverage minimum
+- API Conventions: RESTful, envelope responses, cursor pagination
+## Interfaces
+Owns: /v1/auth/* endpoints, get_current_user FastAPI dependency
+Consumes: User table schema (Track 02), Database session factory (Track 02)
+## Dependencies
+01_infra_scaffold, 02_database_schema
+
+<!-- END ARCHITECT CONTEXT -->
+
 # Track 03: Authentication & Authorization
 
 ## What This Track Delivers

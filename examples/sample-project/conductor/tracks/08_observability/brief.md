@@ -1,5 +1,16 @@
 <!-- ARCHITECT CONTEXT | Track: 08_observability | Wave: 1 | CC: v1 -->
 
+## Cross-Cutting Constraints
+- Observability: OTel SDK for traces and metrics, structlog with JSON output
+- Health Checks: /healthz and /readyz endpoints
+## Interfaces
+Owns: OTel Collector config, Grafana dashboards, structlog processor
+Consumes: Docker Compose services (Track 01)
+## Dependencies
+None (Wave 1)
+
+<!-- END ARCHITECT CONTEXT -->
+
 # Track 08: Observability Stack
 
 ## What This Track Delivers

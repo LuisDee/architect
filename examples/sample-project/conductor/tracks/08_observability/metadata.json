@@ -1,0 +1,22 @@
+{
+  "track_id": "08_observability",
+  "status": "new",
+  "complexity": "S",
+  "wave": 1,
+
+  "cc_version_at_brief": null,
+  "cc_version_current": "v1",
+
+  "dependencies": [],
+  "interfaces_owned": ["OTel Collector config", "Grafana dashboards", "structlog processor"],
+  "interfaces_consumed": [],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "patches": [],
+
+  "created_at": "2025-01-15T10:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

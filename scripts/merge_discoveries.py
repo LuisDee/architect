@@ -156,14 +156,14 @@ def validate_urgency(entry: dict, track_states: dict) -> str | None:
 
     # Check if this blocks an IN_PROGRESS track
     for tid, meta in track_states.items():
-        if meta.get("state") == "IN_PROGRESS" and tid in deps_text:
+        if meta.get("status") == "in_progress" and tid in deps_text:
             return "BLOCKING"
 
     # Check if this blocks a track in the next wave
     if urgency == "BACKLOG":
         for tid, meta in track_states.items():
-            state = meta.get("state", "NOT_STARTED")
-            if state == "NOT_STARTED" and tid in deps_text:
+            state = meta.get("status", "new")
+            if state == "new" and tid in deps_text:
                 return "NEXT_WAVE"
 
     return None

@@ -1,13 +1,13 @@
 # Patch Phase Template
 #
 # Appended to an existing track's plan.md when a cross-cutting change
-# requires retroactive compliance on a COMPLETE track.
+# requires retroactive compliance on a "completed" track.
 #
 # Placeholders: {{PATCH_ID}}, {{CC_VERSION}}, {{CONCERN_NAME}},
 # {{DATE}}, {{BLOCKS_WAVE}}, {{DEPENDS_ON}}, {{TASKS}}, {{TEST_COMMAND}}
 #
 # When this phase is injected:
-# - Track state changes from COMPLETE to NEEDS_PATCH
+# - Track status changes from "completed" to "needs_patch"
 # - metadata.json patches[] array gets a new entry
 # - Wave completion gate checks this patch before advancing
 

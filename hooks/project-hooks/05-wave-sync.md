@@ -11,12 +11,12 @@ Update track state, check if the current wave is fully complete, and if so, run 
 ### 1. Update track metadata
 
 Open `conductor/tracks/<your_track>/metadata.json`:
-- Set `state` to `"COMPLETE"`
+- Set `status` to `"completed"`
 - Set `completed_at` to the current ISO-8601 timestamp
 
 ### 2. Check wave completion
 
-Open `architect/execution-sequence.md` and find your wave. Are ALL tracks in this wave now COMPLETE?
+Open `architect/execution-sequence.md` and find your wave. Are ALL tracks in this wave now "completed"?
 
 **If NOT all complete:**
 - Continue to the next track in the wave (or wait for other agents to complete their tracks)

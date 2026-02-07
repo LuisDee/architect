@@ -1,0 +1,22 @@
+{
+  "track_id": "05_api_layer",
+  "status": "new",
+  "complexity": "L",
+  "wave": 4,
+
+  "cc_version_at_brief": null,
+  "cc_version_current": "v1",
+
+  "dependencies": ["02_database_schema", "03_auth_system", "04_workflow_engine", "06_event_system"],
+  "interfaces_owned": ["/v1/workflows", "/v1/runs", "/v1/webhooks"],
+  "interfaces_consumed": ["Auth middleware", "Workflow engine", "Database session", "Event publisher"],
+
+  "events_published": [],
+  "events_consumed": [],
+
+  "patches": [],
+
+  "created_at": "2025-01-15T10:00:00Z",
+  "started_at": null,
+  "completed_at": null
+}

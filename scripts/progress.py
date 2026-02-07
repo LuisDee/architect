@@ -13,7 +13,7 @@ Output (JSON to stdout):
       "overall_progress": 0.42,
       "waves": [...],
       "pending_items": { "discoveries": 2, "patches": 1 },
-      "tracks_by_state": { "COMPLETE": 4, "IN_PROGRESS": 2, "NOT_STARTED": 6 }
+      "tracks_by_status": { "completed": 4, "in_progress": 2, "new": 6 }
     }
 """
 
@@ -52,24 +52,24 @@ def load_all_tracks(tracks_dir: str) -> list[dict]:
 
 def calculate_track_completion(meta: dict) -> float:
     """Calculate completion percentage for a single track."""
-    state = meta.get("state", "NOT_STARTED")
+    state = meta.get("status", "new")
 
     # Fully complete with no pending patches
     pending_patches = [
         p for p in meta.get("patches", [])
         if p.get("status") != "COMPLETE"
     ]
-    if state == "COMPLETE" and not pending_patches:
+    if state == "completed" and not pending_patches:
         return 1.0
 
-    if state == "NOT_STARTED":
+    if state == "new":
         return 0.0
 
     # Parse plan.md for phase completion
     plan_path = Path(meta.get("_dir", "")) / "plan.md"
     if not plan_path.exists():
         # No plan file — estimate from state
-        if state == "COMPLETE":
+        if state == "completed":
             return 0.9  # Complete but has pending patches
         return 0.1  # In progress but can't measure
 
@@ -79,12 +79,12 @@ def calculate_track_completion(meta: dict) -> float:
     total = checked + unchecked
 
     if total == 0:
-        return 0.5 if state == "IN_PROGRESS" else 0.0
+        return 0.5 if state == "in_progress" else 0.0
 
     base_completion = checked / total
 
     # If complete but has pending patches, cap at 90%
-    if state == "COMPLETE" and pending_patches:
+    if state == "completed" and pending_patches:
         return min(base_completion, 0.9)
 
     return base_completion
@@ -125,7 +125,7 @@ def main():
             "overall_progress": 0.0,
             "waves": [],
             "pending_items": {"discoveries": 0, "patches": 0},
-            "tracks_by_state": {},
+            "tracks_by_status": {},
             "message": "No tracks found",
         }, indent=2))
         sys.exit(0)
@@ -159,7 +159,7 @@ def main():
 
             wave_track_details.append({
                 "track_id": t["track_id"],
-                "state": t.get("state", "NOT_STARTED"),
+                "status": t.get("status", "new"),
                 "complexity": complexity,
                 "weight": weight,
                 "completion": round(completion, 2),
@@ -178,7 +178,7 @@ def main():
     # State counts
     state_counts = {}
     for t in tracks:
-        state = t.get("state", "NOT_STARTED")
+        state = t.get("status", "new")
         state_counts[state] = state_counts.get(state, 0) + 1
 
     # Pending items
@@ -191,7 +191,7 @@ def main():
         "total_weighted_units": total_weighted,
         "completed_weighted_units": round(done_weighted, 1),
         "waves": wave_results,
-        "tracks_by_state": state_counts,
+        "tracks_by_status": state_counts,
         "pending_items": {
             "discoveries": pending_discoveries,
             "patches": pending_patches,

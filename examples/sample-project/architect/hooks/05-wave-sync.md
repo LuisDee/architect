@@ -4,19 +4,19 @@
 
 ## Purpose
 
-Update track state, check if the current wave is fully complete, and if so, run the quality gate and advance to the next wave.
+Update track status, check if the current wave is fully complete, and if so, run the quality gate and advance to the next wave.
 
 ## Procedure
 
 ### 1. Update track metadata
 
 Open `conductor/tracks/<your_track>/metadata.json`:
-- Set `state` to `"COMPLETE"`
+- Set `status` to `"completed"`
 - Set `completed_at` to the current ISO-8601 timestamp
 
 ### 2. Check wave completion
 
-Open `architect/execution-sequence.md` and find your wave. Are ALL tracks in this wave now COMPLETE?
+Open `architect/execution-sequence.md` and find your wave. Are ALL tracks in this wave now "completed"?
 
 **If NOT all complete:**
 - Continue to the next track in the wave (or wait for other agents to complete their tracks)
@@ -70,7 +70,7 @@ The quality gate checks:
 - **All phases complete:** Every task checkbox checked in every track's plan.md
 - **Tests passing:** Each track's `test_command` from metadata.json runs successfully
 - **No blocking discoveries:** No BLOCKING-urgency files in `architect/discovery/pending/`
-- **Patches applied:** All patches with `blocks_wave == next_wave` have status COMPLETE
+- **Patches applied:** All patches with `blocks_wave == next_wave` have patch status COMPLETE
 
 ### 6. Present results to developer
 

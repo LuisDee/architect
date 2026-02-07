@@ -1,5 +1,17 @@
 <!-- ARCHITECT CONTEXT | Track: 05_api_layer | Wave: 4 | CC: v1 -->
 
+## Cross-Cutting Constraints
+- API Conventions: RESTful, envelope responses, cursor pagination, snake_case JSON
+- Error Handling: RFC 7807 Problem Details format
+- Observability: OTel traces on all HTTP requests
+## Interfaces
+Owns: /v1/workflows, /v1/runs, /v1/webhooks endpoints
+Consumes: Auth middleware (Track 03), Workflow engine (Track 04), Database session (Track 02), Event publisher (Track 06)
+## Dependencies
+02_database_schema, 03_auth_system, 04_workflow_engine, 06_event_system
+
+<!-- END ARCHITECT CONTEXT -->
+
 # Track 05: REST API Layer
 
 ## What This Track Delivers

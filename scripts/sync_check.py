@@ -156,25 +156,25 @@ def check_cc_version_drift(
     drift = []
     for t in tracks:
         tid = t["track_id"]
-        state = t.get("state", "NOT_STARTED")
+        state = t.get("status", "new")
         cc_at_start = t.get("cc_version_at_start")
         cc_current = t.get("cc_version_current")
 
-        if state == "NOT_STARTED":
+        if state == "new":
             continue  # Will get regenerated header anyway
 
         if cc_current and cc_current != current_version:
             drift.append({
                 "track_id": tid,
-                "state": state,
+                "status": state,
                 "track_cc_version": cc_current,
                 "current_cc_version": current_version,
-                "action": "NEEDS_PATCH" if state == "COMPLETE" else "MID_TRACK_ADOPTION",
+                "action": "NEEDS_PATCH" if state == "completed" else "MID_TRACK_ADOPTION",
             })
         elif cc_at_start and cc_at_start != current_version and not cc_current:
             drift.append({
                 "track_id": tid,
-                "state": state,
+                "status": state,
                 "track_cc_version": cc_at_start,
                 "current_cc_version": current_version,
                 "action": "cc_version_current not updated",

@@ -116,7 +116,7 @@ When an interface needs to change:
 
 1. Owner proposes change in interfaces.md
 2. All consumers listed under the interface are checked:
-   - NOT_STARTED: auto-inherit via header regeneration
-   - IN_PROGRESS: flag for developer review
-   - COMPLETE: INTERFACE_MISMATCH discovery → patch phase if needed
+   - new: auto-inherit via header regeneration
+   - in_progress: flag for developer review
+   - completed: INTERFACE_MISMATCH discovery → patch phase if needed
 3. Breaking changes require developer approval before applying

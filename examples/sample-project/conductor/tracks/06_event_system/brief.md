@@ -1,5 +1,17 @@
 <!-- ARCHITECT CONTEXT | Track: 06_event_system | Wave: 2 | CC: v1 -->
 
+## Cross-Cutting Constraints
+- Transactional Outbox: Outbox relay polls and publishes to Redis
+- Connection Pooling: Redis max_connections=20
+- Testing: TDD, 80% coverage minimum
+## Interfaces
+Owns: Celery worker config, outbox relay, Redis pub/sub, cache-aside utilities
+Consumes: Docker Compose Redis (Track 01)
+## Dependencies
+01_infra_scaffold
+
+<!-- END ARCHITECT CONTEXT -->
+
 # Track 06: Event System & Task Queue
 
 ## What This Track Delivers

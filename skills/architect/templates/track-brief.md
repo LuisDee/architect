@@ -161,6 +161,29 @@ These should be resolved with the developer during spec generation:
        where JWT auth isn't practical
 -->
 
+## Test Strategy
+
+{test_strategy}
+
+<!-- Inferred from tech-stack.md. The brief-generator derives this based on
+     the project's framework choices. Conductor may override during spec generation.
+
+     Example:
+     - **Test framework:** pytest (Python) + Vitest (TypeScript)
+     - **Unit tests:** Business logic, utility functions, data transformations
+     - **Integration tests:** API endpoint testing with test database
+     - **Prerequisites:** Track 01_infra_scaffold (test database), Track 02_database_schema (models)
+     - **Quality threshold:** 80% line coverage (advisory)
+     - **Key test scenarios:**
+       1. Happy path for each endpoint
+       2. Authentication/authorization boundaries
+       3. Input validation edge cases
+       4. Error response format compliance
+
+     This section is advisory — the developer makes final test strategy decisions
+     during spec generation with Conductor.
+-->
+
 ## Complexity: {complexity}
 ## Estimated Phases: ~{estimated_phases}
 

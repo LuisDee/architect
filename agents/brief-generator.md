@@ -64,6 +64,13 @@ Using the template and context bundle, generate the brief. Fill in:
 - **Scope OUT** — what's excluded with pointers to where it lives
 - **Key Design Decisions** — 3-7 genuine design forks with options and trade-offs. These are QUESTIONS for the developer, NOT answers.
 - **Architectural Notes** — integration points, cross-track impacts, gotchas
+- **Test Strategy** — derived from tech-stack.md. Infer:
+  - Test framework: match project language/framework (e.g., pytest for Python, Vitest/Jest for TypeScript)
+  - Unit tests: what logic should be unit-tested
+  - Integration tests: what API/DB boundaries need integration tests
+  - Prerequisites: which other tracks must be complete for integration tests
+  - Quality threshold: advisory coverage target (default 80%)
+  - Key test scenarios: 3-5 important scenarios for this track
 - **Complexity** — from context bundle (S/M/L/XL)
 - **Estimated Phases** — advisory count for Conductor's planning
 
@@ -81,6 +88,9 @@ Using the template, generate metadata with:
 - `cc_version_at_brief`: "v1", `cc_version_current`: "v1"
 - `dependencies`, `interfaces_owned`, `interfaces_consumed` — from context bundle
 - `events_published`, `events_consumed` — extract from interfaces if applicable
+- `test_prerequisites` — track IDs whose completion is needed for integration tests
+- `quality_threshold` — `{"line_coverage": 80, "pass_rate": 100}` (advisory defaults)
+- `override_log` — `[]` (populated during implementation when overrides occur)
 - `patches`: []
 - `created_at` — current ISO 8601 timestamp
 

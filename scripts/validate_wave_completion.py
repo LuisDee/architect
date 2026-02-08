@@ -123,6 +123,74 @@ def check_blocking_discoveries(
     return True, "No blocking discoveries"
 
 
+def check_test_prerequisites(
+    meta: dict, all_tracks_dir: str
+) -> tuple[bool, str]:
+    """Check that test prerequisites (other tracks) are completed."""
+    prereqs = meta.get("test_prerequisites", [])
+    if not prereqs:
+        return True, "No test prerequisites"
+
+    tracks_path = Path(all_tracks_dir)
+    incomplete = []
+
+    for prereq_id in prereqs:
+        prereq_meta_path = tracks_path / prereq_id / "metadata.json"
+        if not prereq_meta_path.exists():
+            incomplete.append(f"{prereq_id} (not found)")
+            continue
+
+        try:
+            with open(prereq_meta_path) as f:
+                prereq_meta = json.load(f)
+            if prereq_meta.get("status") != "completed":
+                incomplete.append(f"{prereq_id} ({prereq_meta.get('status', 'unknown')})")
+        except (json.JSONDecodeError, OSError):
+            incomplete.append(f"{prereq_id} (unreadable)")
+
+    if incomplete:
+        return False, f"Prerequisites not met: {', '.join(incomplete)}"
+    return True, f"All {len(prereqs)} prerequisites completed"
+
+
+def check_quality_threshold(
+    meta: dict
+) -> tuple[bool, str]:
+    """Check if quality thresholds are defined (advisory warning only)."""
+    threshold = meta.get("quality_threshold")
+    if not threshold:
+        return True, "No quality threshold defined"
+
+    coverage = threshold.get("line_coverage", 0)
+    pass_rate = threshold.get("pass_rate", 100)
+
+    # This is advisory only — we just report the thresholds
+    # Actual measurement happens when tests run
+    return True, f"Thresholds: {coverage}% coverage, {pass_rate}% pass rate (advisory)"
+
+
+def log_override(
+    meta: dict, meta_path: Path, check: str, reason: str
+) -> None:
+    """Append an override entry to metadata.json override_log."""
+    from datetime import datetime, timezone
+    override_entry = {
+        "check": check,
+        "reason": reason,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+    override_log = meta.get("override_log", [])
+    override_log.append(override_entry)
+    meta["override_log"] = override_log
+
+    try:
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2)
+    except OSError as e:
+        print(f"Warning: could not write override to {meta_path}: {e}", file=sys.stderr)
+
+
 def check_patches(meta: dict, next_wave: int) -> tuple[bool, str]:
     """Check that patches blocking the next wave are complete."""
     patches = meta.get("patches", [])
@@ -173,13 +241,19 @@ def main():
         track_dir = meta["_dir"]
         track_ok = True
 
-        # 1. Check phases
+        # 1. Check test prerequisites
+        prereq_ok, prereq_msg = check_test_prerequisites(meta, args.tracks_dir)
+        if not prereq_ok:
+            results.append({"status": "FAIL", "track_id": tid, "check": "prerequisites", "message": prereq_msg})
+            track_ok = False
+
+        # 2. Check phases
         phases_ok, phases_msg = check_phases_complete(track_dir)
         if not phases_ok:
             results.append({"status": "FAIL", "track_id": tid, "check": "phases", "message": phases_msg})
             track_ok = False
 
-        # 2. Check tests
+        # 3. Check tests
         test_cmd = meta.get("test_command")
         if test_cmd and not args.skip_tests:
             timeout = meta.get("test_timeout_seconds", 300)
@@ -194,13 +268,18 @@ def main():
             results.append({"status": "WARN", "track_id": tid, "check": "tests", "message": "Tests skipped (--skip-tests)"})
             summary["warn"] += 1
 
-        # 3. Check blocking discoveries
+        # 4. Check quality thresholds (advisory)
+        thresh_ok, thresh_msg = check_quality_threshold(meta)
+        if thresh_ok and "advisory" in thresh_msg:
+            results.append({"status": "INFO", "track_id": tid, "check": "quality", "message": thresh_msg})
+
+        # 5. Check blocking discoveries
         disc_ok, disc_msg = check_blocking_discoveries(tid, args.discovery_dir)
         if not disc_ok:
             results.append({"status": "FAIL", "track_id": tid, "check": "discoveries", "message": disc_msg})
             track_ok = False
 
-        # 4. Check patches
+        # 6. Check patches
         patches_ok, patches_msg = check_patches(meta, next_wave)
         if not patches_ok:
             results.append({"status": "FAIL", "track_id": tid, "check": "patches", "message": patches_msg})

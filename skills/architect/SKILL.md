@@ -228,6 +228,21 @@ Mid-project pattern detection identifies emerging cross-cutting concerns:
 
 Pattern promotion requires explicit developer approval during `/architect-sync`. Promoted patterns become new CC version entries.
 
+### Enhanced Testing Integration (v2.1)
+
+Track briefs and metadata include testing context to give Conductor better test strategy guidance:
+
+1. **Test Strategy in Briefs** — Each brief.md includes a `## Test Strategy` section with framework, unit/integration boundaries, prerequisites, quality thresholds, and key test scenarios. Derived from tech-stack.md by the brief-generator agent.
+2. **Test Prerequisites** — `metadata.json` includes `test_prerequisites[]` listing track IDs whose completion is needed before integration tests can run (e.g., database schema track must complete before API track can run integration tests).
+3. **Quality Thresholds** — Advisory `quality_threshold` in metadata (`line_coverage`, `pass_rate`). Defaults: 80% coverage, 100% pass rate. These are advisory — developer can override during spec generation.
+4. **Prerequisite Validation** — `validate_wave_completion.py` checks that prerequisite tracks are completed before counting a track's wave as passing.
+5. **Override Audit Trail** — When checks are waived, `log_override()` appends to `metadata.json.override_log[]` with check name, reason, and timestamp for traceability.
+
+Key principles:
+- **Advisory, not blocking** — Quality thresholds inform decisions but never hard-block wave advancement
+- **Developer sovereignty** — All gates can be overridden with logged reason
+- **Prerequisite-aware** — Integration test prerequisites tracked separately from build dependencies
+
 ### Context Headers
 
 Every `brief.md` starts with a compressed context header filtered to what THIS track needs:

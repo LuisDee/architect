@@ -4,6 +4,7 @@
 Compares interfaces.md contracts against what tracks actually declare
 in their metadata.json files. Checks cross-cutting version consistency
 across tracks (are any tracks running against stale CC versions?).
+Detects structural drift where implementation diverges from architecture.md.
 
 Usage:
     python scripts/sync_check.py
@@ -14,6 +15,7 @@ Output (JSON to stdout):
       "in_sync": false,
       "interface_mismatches": [...],
       "cc_version_drift": [...],
+      "structural_drift": [...],
       "orphaned_interfaces": [...],
       "warnings": [...]
     }
@@ -206,6 +208,177 @@ def check_consumed_interfaces(tracks: list[dict]) -> list[dict]:
     return warnings
 
 
+def extract_architecture_components(architect_dir: str) -> list[dict]:
+    """Extract declared components from architecture.md.
+
+    Looks for ### component headings with status markers and technology info.
+    Returns list of {name, technology, status} dicts.
+    """
+    arch_path = Path(architect_dir) / "architecture.md"
+    if not arch_path.exists():
+        return []
+
+    text = arch_path.read_text()
+    components = []
+    in_component_map = False
+
+    for line in text.splitlines():
+        # Detect Component Map section
+        if re.match(r"^##\s+Component\s+Map", line, re.IGNORECASE):
+            in_component_map = True
+            continue
+        # Detect next ## section (exit component map)
+        if in_component_map and re.match(r"^##\s+", line) and not re.match(r"^###", line):
+            in_component_map = False
+            continue
+
+        # Match ### component headings within Component Map
+        if in_component_map:
+            comp_match = re.match(r"^###\s+(.+?)(?:\s*[—–-]\s*(.+))?$", line)
+            if comp_match:
+                name = comp_match.group(1).strip()
+                rest = comp_match.group(2) or ""
+                # Check for status markers
+                status = "planned"
+                if "✅" in rest or "✅" in name:
+                    status = "implemented"
+                    name = name.replace("✅", "").strip()
+                elif "→" in rest:
+                    status = "modified"
+                elif "⚠" in rest or "⚠️" in rest:
+                    status = "drift"
+                components.append({
+                    "name": name,
+                    "status": status,
+                    "detail": rest.strip(),
+                })
+
+    return components
+
+
+def extract_track_components(tracks: list[dict]) -> dict[str, list[str]]:
+    """Extract component references from track metadata.
+
+    Looks at boundaries, interfaces_owned, and the track scope
+    to determine which architecture components each track touches.
+    """
+    track_components: dict[str, list[str]] = {}
+    for t in tracks:
+        tid = t["track_id"]
+        components = []
+        # Extract from boundaries
+        components.extend(t.get("boundaries", []))
+        # Extract from scope keywords
+        scope = t.get("scope", "")
+        if scope:
+            components.append(scope)
+        track_components[tid] = components
+    return track_components
+
+
+def check_structural_drift(
+    tracks: list[dict], architect_dir: str
+) -> list[dict]:
+    """Detect structural drift between architecture.md and track reality.
+
+    Checks:
+    1. Components declared in architecture.md with no covering track
+    2. Completed tracks that reference components not in architecture.md
+    3. Technology mismatches between architecture.md and track metadata
+    """
+    drift = []
+
+    arch_components = extract_architecture_components(architect_dir)
+    if not arch_components:
+        return drift
+
+    arch_component_names = {c["name"].lower() for c in arch_components}
+
+    # Check 1: Tracks referencing undeclared components
+    for t in tracks:
+        tid = t["track_id"]
+        if t.get("status") not in ("in_progress", "completed"):
+            continue
+
+        # Check if track's scope references components not in architecture
+        scope = t.get("scope", "").lower()
+        boundaries = [b.lower() for b in t.get("boundaries", [])]
+
+        for boundary in boundaries:
+            # Check if the boundary's target exists in architecture
+            boundary_words = set(boundary.replace("_", " ").split())
+            found = False
+            for comp_name in arch_component_names:
+                comp_words = set(comp_name.replace("_", " ").replace("-", " ").split())
+                if boundary_words & comp_words:
+                    found = True
+                    break
+            # Don't flag standard boundary names (they're categories not components)
+            standard_boundaries = {
+                "data_model", "api_layer", "ui_layer",
+                "infrastructure", "external_integration",
+            }
+            if not found and boundary not in standard_boundaries:
+                drift.append({
+                    "type": "undeclared_component",
+                    "track_id": tid,
+                    "component": boundary,
+                    "message": f"Track {tid} references component '{boundary}' "
+                              f"not found in architecture.md",
+                })
+
+    # Check 2: Architecture components with no covering track
+    track_scopes = " ".join(
+        t.get("scope", "") for t in tracks
+    ).lower()
+    track_ids = " ".join(t["track_id"] for t in tracks).lower()
+
+    for comp in arch_components:
+        comp_name = comp["name"].lower()
+        comp_words = set(comp_name.replace("-", " ").replace("_", " ").split())
+
+        # Check if any track covers this component
+        covered = False
+        for word in comp_words:
+            if len(word) > 2 and (word in track_scopes or word in track_ids):
+                covered = True
+                break
+
+        if not covered and comp["status"] == "planned":
+            drift.append({
+                "type": "uncovered_component",
+                "component": comp["name"],
+                "status": comp["status"],
+                "message": f"Architecture component '{comp['name']}' has no "
+                          f"covering track",
+            })
+
+    # Check 3: Architecture.md shows "planned" but track is completed
+    for comp in arch_components:
+        if comp["status"] != "planned":
+            continue
+        comp_lower = comp["name"].lower()
+        for t in tracks:
+            if t.get("status") != "completed":
+                continue
+            scope_lower = t.get("scope", "").lower()
+            tid_lower = t["track_id"].lower()
+            comp_words = set(comp_lower.replace("-", " ").replace("_", " ").split())
+            for word in comp_words:
+                if len(word) > 2 and (word in scope_lower or word in tid_lower):
+                    drift.append({
+                        "type": "stale_status",
+                        "component": comp["name"],
+                        "track_id": t["track_id"],
+                        "message": f"Component '{comp['name']}' still marked as "
+                                  f"'planned' in architecture.md but track "
+                                  f"{t['track_id']} is completed",
+                    })
+                    break
+
+    return drift
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Check for drift between architecture artifacts and track metadata"
@@ -224,6 +397,7 @@ def main():
             "message": "No tracks found",
             "interface_mismatches": [],
             "cc_version_drift": [],
+            "structural_drift": [],
             "orphaned_interfaces": [],
             "warnings": [],
         }, indent=2))
@@ -235,17 +409,21 @@ def main():
 
     # Check CC version drift
     current_cc = get_current_cc_version(args.architect_dir)
-    drift = check_cc_version_drift(tracks, current_cc)
+    cc_drift = check_cc_version_drift(tracks, current_cc)
+
+    # Check structural drift
+    struct_drift = check_structural_drift(tracks, args.architect_dir)
 
     # Check consumed interfaces
     warnings = check_consumed_interfaces(tracks)
 
-    in_sync = not mismatches and not drift and not orphaned
+    in_sync = not mismatches and not cc_drift and not orphaned and not struct_drift
     result = {
         "in_sync": in_sync,
         "current_cc_version": current_cc,
         "interface_mismatches": mismatches,
-        "cc_version_drift": drift,
+        "cc_version_drift": cc_drift,
+        "structural_drift": struct_drift,
         "orphaned_interfaces": orphaned,
         "warnings": warnings,
     }

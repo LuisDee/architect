@@ -69,6 +69,8 @@ Use these templates when generating project artifacts. Each template contains pl
 | `templates/track-brief.md` | `conductor/tracks/<id>/brief.md` per track — the handoff to Conductor |
 | `templates/track-metadata.json` | `conductor/tracks/<id>/metadata.json` per track |
 | `templates/patch-phase.md` | Retroactive compliance phase (injected into existing plans) |
+| `templates/adr.md` | `architect/decisions/ADR-NNN-slug.md` — Architecture Decision Record (v2.1) |
+| `templates/changelog-entry.md` | `architect/CHANGELOG.md` entries — per-wave summary (v2.1) |
 
 ## Scripts (Run Via Bash)
 
@@ -82,7 +84,9 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 | `scripts/feature_context.py` | Prepare architecture-aware context for feature decomposition (v2.1) | During `/architect-feature` |
 | `scripts/scope_analyzer.py` | Analyze feature scope: single vs. multi-track decision tree (v2.1) | During `/architect-feature` |
 | `scripts/merge_discoveries.py` | Process pending discoveries (dedup + conflict check) | During sync |
-| `scripts/sync_check.py` | Drift detection between tracks and architecture | During sync |
+| `scripts/extract_decisions.py` | Parse track artifacts for technology choices, patterns, interfaces (v2.1) | During wave-sync |
+| `scripts/architecture_updater.py` | Auto-update architecture.md, generate ADRs, changelog (v2.1) | During wave-sync |
+| `scripts/sync_check.py` | Drift detection (interface, CC version, structural) between tracks and architecture | During sync |
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
 | `scripts/check_conductor_compat.py` | Conductor format compatibility check | Before decompose |
 | `scripts/progress.py` | Complexity-weighted progress calculation | During status |
@@ -180,7 +184,23 @@ Hooks fire at specific points during Conductor's `/conductor:implement`:
 | interface-verification | Before consuming another track's API | Catch contract drift |
 | discovery-check | After each task | Identify emergent work |
 | phase-validation | Before marking phase complete | Verify CC compliance |
-| wave-sync | After track complete | Sync, quality gate, advance |
+| wave-sync | After track complete | Sync, architecture update, quality gate, advance |
+
+### Living Architecture (v2.1)
+
+Architecture artifacts auto-update as tracks complete. The wave-sync hook triggers `architecture_updater.py` after each track completion:
+
+1. **Decision extraction** — `extract_decisions.py` parses spec.md/plan.md for technology choices, pattern selections, and interface definitions
+2. **Architecture patching** — Additive-only updates to architecture.md (confirmed choices, status markers, cross-references to ADRs)
+3. **ADR generation** — Standalone ADR files in `architect/decisions/` for significant decisions (alternatives considered, pattern choices)
+4. **Changelog** — Per-wave summary appended to `architect/CHANGELOG.md`
+5. **Structural drift detection** — `sync_check.py` detects when implementation diverges from architecture.md (stale status, uncovered components, undeclared components)
+
+Key principles:
+- **Additive only** — Architecture.md is never destructively edited; only new sections, status updates, and confirmations
+- **ADR format** — Context / Decision / Alternatives / Consequences (Michael Nygard format)
+- **ADR numbering** — `ADR-NNN-slug.md` (e.g., `ADR-003-jwt-rs256-over-sessions.md`) in `architect/decisions/`
+- **Idempotent** — Running the updater twice produces the same result
 
 ### Context Headers
 

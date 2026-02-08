@@ -14,7 +14,28 @@ Open `conductor/tracks/<your_track>/metadata.json`:
 - Set `status` to `"completed"`
 - Set `completed_at` to the current ISO-8601 timestamp
 
-### 2. Check wave completion
+### 2. Update architecture (Living Architecture)
+
+Run the architecture updater to extract decisions, generate ADRs, and patch architecture.md:
+
+```bash
+python scripts/architecture_updater.py --track-dir conductor/tracks/<your_track> --architect-dir architect --wave <N>
+```
+
+Or if running from the plugin:
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/architecture_updater.py --track-dir conductor/tracks/<your_track> --architect-dir architect --wave <N>
+```
+
+Review the output:
+- Note any ADRs generated (inform the developer)
+- Note any architecture patches applied
+- If drift warnings appear, flag them for developer review
+- The changelog entry is appended automatically
+
+**Tip:** Use `--dry-run` first if you want to preview changes before applying.
+
+### 3. Check wave completion
 
 Open `architect/execution-sequence.md` and find your wave. Are ALL tracks in this wave now "completed"?
 
@@ -23,9 +44,9 @@ Open `architect/execution-sequence.md` and find your wave. Are ALL tracks in thi
 - No further action needed from this hook
 
 **If ALL tracks in the wave are complete:**
-Proceed to Step 3.
+Proceed to Step 4.
 
-### 3. Process pending discoveries
+### 4. Process pending discoveries
 
 Run the merge discoveries script:
 ```bash
@@ -42,7 +63,7 @@ Review the output:
 - Present any conflicts to the developer
 - Note any urgency escalations
 
-### 4. Run sync check
+### 5. Run sync check
 
 ```bash
 python scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
@@ -53,9 +74,9 @@ Or if running from the plugin:
 python ${CLAUDE_PLUGIN_ROOT}/scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
 ```
 
-Review drift warnings. If interface mismatches or CC version drift are found, they should be resolved before advancing.
+Review drift warnings. If interface mismatches, CC version drift, or structural drift are found, they should be resolved before advancing.
 
-### 5. Run wave quality gate
+### 6. Run wave quality gate
 
 ```bash
 python scripts/validate_wave_completion.py --wave <N> --tracks-dir conductor/tracks --discovery-dir architect/discovery
@@ -72,7 +93,7 @@ The quality gate checks:
 - **No blocking discoveries:** No BLOCKING-urgency files in `architect/discovery/pending/`
 - **Patches applied:** All patches with `blocks_wave == next_wave` have status COMPLETE
 
-### 6. Present results to developer
+### 7. Present results to developer
 
 Show a clear summary:
 
@@ -99,7 +120,7 @@ Wave N Quality Gate Results:
   3. Force-advance to Wave N+1
 ```
 
-### 7. Advance to next wave (if gate passed or developer force-advances)
+### 8. Advance to next wave (if gate passed or developer force-advances)
 
 Present the next wave:
 - List tracks in Wave N+1 with their complexity and dependencies
@@ -108,7 +129,7 @@ Present the next wave:
 
 Update `architect/execution-sequence.md` status for the completed wave.
 
-### 8. For Agent Teams scenarios
+### 9. For Agent Teams scenarios
 
 If multiple agents worked on tracks in this wave:
 - The lead agent (or the last agent to complete) runs this hook

@@ -89,6 +89,30 @@ components, key dependencies, notable patterns or anti-patterns, and any
 signals that imply specific architecture patterns.]
 ```
 
+## Fan-In Analysis Output (v2.1)
+
+When invoked with `--fan-in` or during mid-project pattern detection, add a structured JSON section to your output for consumption by `detect_patterns.py`:
+
+```
+## Fan-In Data (JSON)
+```json
+{
+  "modules": [
+    {"path": "src/auth/", "imports": ["express", "logger", "validator"], "exports": ["authRouter"]},
+    {"path": "src/api/", "imports": ["express", "logger", "validator"], "exports": ["apiRouter"]}
+  ],
+  "function_calls": [
+    {"name": "logger.error", "locations": ["src/auth/login.js:42", "src/api/users.js:78"]},
+    {"name": "validator.validate", "locations": ["src/auth/login.js:15", "src/api/users.js:22"]}
+  ],
+  "code_structures": [
+    {"pattern": "try/catch with error response", "locations": ["src/api/users.js:70-85", "src/admin/roles.js:28-43"], "structure": "try { ... } catch (err) { res.status(500).json({...}) }"}
+  ]
+}
+```
+
+This structured data feeds into the pattern detector for fan-in analysis and repetition detection.
+
 ## Constraints
 
 - Structure tree MUST be max 30 lines — show key structure, not every file

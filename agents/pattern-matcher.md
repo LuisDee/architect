@@ -80,6 +80,26 @@ distribution, how many cross-cutting concerns are applicable, any notable
 gaps or risks identified.]
 ```
 
+## Mid-Project Pattern Analysis (v2.1)
+
+When invoked during `/architect-sync` (not initial decompose), you operate in **mid-project mode**:
+
+1. You receive existing cross-cutting constraints AND codebase analysis output
+2. Focus on **new patterns not yet tracked** — skip anything already in cross-cutting.md
+3. Use `detect_patterns.py` output as input signals instead of product.md signals
+4. Classify patterns as promotion candidates:
+   - **Promote now** — Pattern appears in >70% of modules, clearly cross-cutting
+   - **Monitor** — Pattern appears in 50-70% of modules, may need more evidence
+   - **Ignore** — Below threshold or already tracked
+
+Output format for mid-project mode adds a `## Pattern Promotions` section:
+```
+## Pattern Promotions
+- [pattern_name]: [promote_now|monitor|ignore]
+  Evidence: [fan-in score, location count]
+  Suggested CC: "[concrete constraint text]"
+```
+
 ## Constraints
 
 - Output MUST fit the structured format above — no prose outside the format

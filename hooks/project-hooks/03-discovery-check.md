@@ -66,7 +66,23 @@ Q1: Does this affect multiple tracks or the whole system?
 - **NEXT_WAVE:** Not blocking now, but must be resolved before the next wave starts.
 - **BACKLOG:** Nice to have. No track is blocked.
 
-### 5. Continue working
+### 5. Check for emerging patterns
+
+Beyond the specific discovery types above, watch for these pattern signals during implementation:
+
+**Fan-in signals** — You're implementing the same import/dependency in many places:
+- Using the same logging library in 3+ modules? → Consider a CC: "All modules use [logger] with [format]"
+- Same validation library everywhere? → Consider a CC: "All input validated with [library]"
+- Same error handling pattern repeated? → Consider a CC: "Standard error format: [format]"
+
+**Repetition signals** — You're writing structurally similar code across modules:
+- Same try/catch/error-response structure? → Candidate for a shared utility
+- Same authentication middleware pattern? → Should be documented as a CC
+- Same database connection setup? → Configuration CC candidate
+
+If you notice these signals, log a discovery with classification `CROSS_CUTTING_CHANGE` and urgency `BACKLOG`. The pattern detector will analyze these during `/architect-sync`.
+
+### 6. Continue working
 
 After writing the discovery file, **continue with your current task**. Do NOT scope-creep into addressing the discovery yourself. The discovery will be processed during the next `/architect-sync`.
 
@@ -74,7 +90,7 @@ Exception: If urgency is BLOCKING and you literally cannot proceed, notify the d
 
 ---
 
-## 6. Deferred Pattern Triggers
+## 7. Deferred Pattern Triggers
 
 During architecture research, some patterns were classified as "Consider for Later" with measurable trigger conditions. Check these triggers as you work:
 

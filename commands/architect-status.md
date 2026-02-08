@@ -23,7 +23,19 @@ python ${CLAUDE_PLUGIN_ROOT}/scripts/progress.py --tracks-dir conductor/tracks -
 
 ---
 
-## Step 2: Run Sync Check
+## Step 2: Render Terminal Progress
+
+Pipe the progress data through the terminal progress renderer:
+
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/progress.py --tracks-dir conductor/tracks --discovery-dir architect/discovery | python ${CLAUDE_PLUGIN_ROOT}/scripts/terminal_progress.py
+```
+
+Display the rendered ASCII progress bars to the user.
+
+---
+
+## Step 3: Run Sync Check
 
 ```bash
 python ${CLAUDE_PLUGIN_ROOT}/scripts/sync_check.py --tracks-dir conductor/tracks --architect-dir architect
@@ -31,13 +43,13 @@ python ${CLAUDE_PLUGIN_ROOT}/scripts/sync_check.py --tracks-dir conductor/tracks
 
 ---
 
-## Step 3: Check Pending Discoveries
+## Step 4: Check Pending Discoveries
 
 Count files in `architect/discovery/pending/`. For any BLOCKING discoveries, read and summarize.
 
 ---
 
-## Step 4: Present Status Report
+## Step 5: Present Status Report
 
 Format the output as a clear status report:
 
@@ -75,6 +87,7 @@ Pending discoveries: N
 From sync check results:
 - CC version drift: which tracks are behind
 - Interface mismatches: which contracts are inconsistent
+- Structural drift: stale component statuses, uncovered components
 - Orphaned interfaces: which are undocumented
 
 ### Blocked Tracks
@@ -88,7 +101,19 @@ List NEEDS_PATCH tracks and which CC version they need to catch up to.
 
 ---
 
-## Step 5: Recommendations
+## Step 6: Generate Diagrams (if --visual requested)
+
+If the user passed `--visual` or asked for visual output:
+
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/generate_diagrams.py --tracks-dir conductor/tracks --architect-dir architect --output-dir architect/diagrams
+```
+
+Report the generated diagram files and their locations.
+
+---
+
+## Step 7: Recommendations
 
 Based on the status, suggest next actions:
 - If blocking discoveries exist: "Run /architect-sync to process discoveries"

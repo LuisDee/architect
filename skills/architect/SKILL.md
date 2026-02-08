@@ -86,6 +86,9 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 | `scripts/merge_discoveries.py` | Process pending discoveries (dedup + conflict check) | During sync |
 | `scripts/extract_decisions.py` | Parse track artifacts for technology choices, patterns, interfaces (v2.1) | During wave-sync |
 | `scripts/architecture_updater.py` | Auto-update architecture.md, generate ADRs, changelog (v2.1) | During wave-sync |
+| `scripts/generate_diagrams.py` | Mermaid diagram generation (dependency graph, component map, wave timeline) (v2.1) | During status --visual, sync |
+| `scripts/terminal_progress.py` | ASCII terminal progress bars with complexity weighting (v2.1) | During status |
+| `scripts/detect_patterns.py` | Fan-in analysis, repetition detection, cross-cutting classification (v2.1) | During sync |
 | `scripts/sync_check.py` | Drift detection (interface, CC version, structural) between tracks and architecture | During sync |
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
 | `scripts/check_conductor_compat.py` | Conductor format compatibility check | Before decompose |
@@ -201,6 +204,29 @@ Key principles:
 - **ADR format** — Context / Decision / Alternatives / Consequences (Michael Nygard format)
 - **ADR numbering** — `ADR-NNN-slug.md` (e.g., `ADR-003-jwt-rs256-over-sessions.md`) in `architect/decisions/`
 - **Idempotent** — Running the updater twice produces the same result
+
+### Visualization (v2.1)
+
+Mermaid diagrams and terminal progress for project visibility:
+
+1. **Dependency graph** (`architect/diagrams/dependency-graph.mmd`) — Status-colored DAG: green=complete, blue=in-progress, gray=pending, red=blocked
+2. **Component map** (`architect/diagrams/component-map.mmd`) — Architecture components from architecture.md
+3. **Wave timeline** (`architect/diagrams/wave-timeline.mmd`) — Gantt chart of wave execution
+4. **Terminal progress** — ASCII progress bars via `terminal_progress.py`, piped from `progress.py`
+
+Generation: `generate_diagrams.py` reads dependency-graph.md, architecture.md, execution-sequence.md, and track metadata. Triggered by `/architect-status --visual` and after `/architect-sync`.
+
+### Pattern Detection (v2.1)
+
+Mid-project pattern detection identifies emerging cross-cutting concerns:
+
+1. **Fan-in analysis** — Counts import frequency per module. >50% fan-in suggests cross-cutting behavior
+2. **Repetition detection** — Flags code structures appearing 3+ times across 2+ modules
+3. **Function hotspots** — Widely-called functions that should be consistent
+4. **Cross-cutting classification** — Matches detected patterns against the CC catalog (always-evaluate, if-multi-service, if-user-facing, if-data-heavy)
+5. **Deduplication** — Word-overlap check against existing constraints to avoid recommending already-tracked patterns
+
+Pattern promotion requires explicit developer approval during `/architect-sync`. Promoted patterns become new CC version entries.
 
 ### Context Headers
 

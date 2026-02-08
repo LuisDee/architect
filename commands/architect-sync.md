@@ -106,7 +106,27 @@ For each non-duplicate discovery, execute the appropriate action:
 
 ---
 
-## Step 2: Run Sync Check
+## Step 2: Pattern Detection (if codebase analysis available)
+
+If a codebase analysis report exists (from a recent codebase-analyzer run):
+
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/detect_patterns.py --analysis-file /tmp/codebase_analysis.json
+```
+
+Review detected patterns:
+- **Fan-in patterns** (>50% module usage): Strong cross-cutting candidates
+- **Repetition patterns** (3+ locations, 2+ modules): May need standardization
+- **Function hotspots**: Widely used functions that should be consistent
+
+For each new recommendation (not already tracked):
+1. Present to developer: "Detected pattern: [name] — [evidence]. Should this become a cross-cutting constraint?"
+2. If developer approves: Create a CROSS_CUTTING_CHANGE discovery (which gets processed in Step 1c)
+3. If developer defers: Log as BACKLOG discovery for future consideration
+
+---
+
+## Step 3: Run Sync Check
 
 Check for drift between architecture artifacts and track metadata:
 ```bash
@@ -122,7 +142,7 @@ Review results:
 
 ---
 
-## Step 3: Validate Wave Completion (if triggered at wave boundary)
+## Step 4: Validate Wave Completion (if triggered at wave boundary)
 
 If this sync was triggered because all tracks in a wave are marked complete:
 
@@ -150,7 +170,17 @@ If all checks PASS:
 
 ---
 
-## Step 4: Summary
+## Step 5: Update Diagrams
+
+If `architect/diagrams/` exists, regenerate diagrams to reflect current state:
+
+```bash
+python ${CLAUDE_PLUGIN_ROOT}/scripts/generate_diagrams.py --tracks-dir conductor/tracks --architect-dir architect --output-dir architect/diagrams
+```
+
+---
+
+## Step 6: Summary
 
 Report:
 - Discoveries processed: N (M duplicates, K conflicts, J escalated)

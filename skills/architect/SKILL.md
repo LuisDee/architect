@@ -26,10 +26,11 @@ After Architect runs, the developer lives entirely in Conductor. Architect's val
 | Command | When | Purpose |
 |---------|------|---------|
 | `/architect-decompose` | Once after `/conductor:setup` | Full project decomposition into tracks |
+| `/architect-feature` | Any time after decompose | Add a new feature to an existing architecture (v2.1) |
 | `/architect-sync` | At wave boundaries or manually | Validate + process pending discoveries |
 | `/architect-status` | Any time | Bird's eye complexity-weighted progress |
 
-Command definitions live in `commands/architect-decompose.md`, `commands/architect-sync.md`, and `commands/architect-status.md`.
+Command definitions live in `commands/architect-decompose.md`, `commands/architect-feature.md`, `commands/architect-sync.md`, and `commands/architect-status.md`.
 
 ## Agents (Sub-Agent Dispatch for Context Optimization)
 
@@ -75,9 +76,11 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 
 | Script | Purpose | When |
 |--------|---------|------|
-| `scripts/validate_dag.py` | Cycle detection in dependency graph | After adding tracks/dependencies |
+| `scripts/validate_dag.py` | Cycle detection + incremental graph updates | After adding tracks/dependencies |
 | `scripts/topological_sort.py` | Generate wave sequence from DAG | During decompose |
 | `scripts/inject_context.py` | Build compressed context headers | During track generation |
+| `scripts/feature_context.py` | Prepare architecture-aware context for feature decomposition (v2.1) | During `/architect-feature` |
+| `scripts/scope_analyzer.py` | Analyze feature scope: single vs. multi-track decision tree (v2.1) | During `/architect-feature` |
 | `scripts/merge_discoveries.py` | Process pending discoveries (dedup + conflict check) | During sync |
 | `scripts/sync_check.py` | Drift detection between tracks and architecture | During sync |
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
@@ -108,6 +111,19 @@ Architect reads Conductor's files as input, writes Conductor-compatible tracks a
 ```
 <!-- ARCHITECT:HOOKS — Read architect/hooks/*.md for additional workflow steps -->
 ```
+
+### Feature Decomposition Flow (v2.1 — `/architect-feature`)
+
+1. **Pre-flight** — Verify `conductor/` and `architect/` exist, at least 1 track exists
+2. **Build feature context** — Run `feature_context.py` to prepare architecture-aware context bundle
+3. **Analyze scope** — Run `scope_analyzer.py` decision tree: needs_clarification → skip_tracking → single_track → multi_track
+4. **Clarification (if needed)** — Ask developer ≤ 3 targeted questions, re-run scope analysis
+5. **Review gate** — Present decomposition recommendation, developer approves/modifies
+6. **Validate DAG** — Run `validate_dag.py --add-tracks` to check no cycles
+7. **Generate briefs** — Dispatch brief-generator sub-agents for new tracks
+8. **Update artifacts** — tracks.md, dependency-graph.md, execution-sequence.md
+
+Key difference from decompose: no architecture research phase (architecture already exists), incremental graph updates, typically 1-3 tracks, single review gate.
 
 ### Decompose Flow (Primary Command — Context-Optimized)
 

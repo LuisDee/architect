@@ -1,0 +1,338 @@
+description = "Decompose a new feature into Conductor tracks within an existing architecture, with scope analysis and incremental dependency graph updates"
+prompt = """
+# /architect-feature
+
+You are performing **feature decomposition** for an existing project that already has an architecture and tracks. Unlike `/architect-decompose` (which does full greenfield decomposition), this command adds new feature tracks to a mature codebase — analyzing scope, reusing existing architecture, and incrementally updating the dependency graph.
+
+The feature description is provided as the command argument: `{{args}}`
+
+---
+
+## Context Optimization Strategy
+
+This command is lighter than `/architect-decompose`. It does NOT re-run architecture research — the architecture already exists. It reuses the existing `brief-generator` sub-agent for brief creation and runs the new `scope_analyzer.py` and `feature_context.py` scripts for analysis.
+
+---
+
+## Step 1: Pre-Flight Checks
+
+1. **Check for Conductor directory:**
+   ```
+   ls conductor/
+   ```
+   If `conductor/` does not exist, stop and tell the user:
+   "Run /conductor:setup first. Architect needs Conductor's project files."
+
+2. **Check for Architect directory:**
+   ```
+   ls architect/
+   ```
+   If `architect/` does not exist, stop and tell the user:
+   "Run /architect-decompose first. Feature decomposition requires an existing architecture. This command adds features to an already-decomposed project."
+
+3. **Verify at least 1 track exists:**
+   ```
+   ls conductor/tracks/
+   ```
+   If no track directories exist, stop and tell the user:
+   "No existing tracks found. Use /architect-decompose for initial project decomposition."
+
+4. **Read the feature description from the command argument.**
+   If `{{args}}` is empty or not provided, ask the user:
+   "What feature would you like to add? Describe it in a sentence or two."
+
+---
+
+## Step 2: Build Feature Context
+
+Run the feature context builder to prepare an architecture-aware context bundle:
+
+```bash
+python ${extensionPath}/scripts/feature_context.py \
+    --feature-description "{{args}}" \
+    --conductor-dir conductor \
+    --architect-dir architect
+```
+
+This produces a JSON bundle containing:
+- Architecture summary (components, confirmed technologies)
+- Existing track summaries (filtered by relevance to the feature)
+- Active cross-cutting constraints
+- Dependency graph structure
+- Codebase hints
+
+Read the JSON output and keep it as context for the next steps.
+
+---
+
+## Step 3: Analyze Scope
+
+Run the scope analyzer to determine whether this feature needs 1 track or N tracks:
+
+```bash
+python ${extensionPath}/scripts/scope_analyzer.py \
+    --feature "{{args}}" \
+    --context-file /tmp/feature_context.json
+```
+
+Or pipe the context directly:
+```bash
+echo '<context_json>' | python ${extensionPath}/scripts/scope_analyzer.py
+```
+
+Handle the result based on the `recommendation` field:
+
+### If `needs_clarification`:
+The feature description is underspecified. Ask the developer the questions returned by the analyzer using targeted questions (max 3). Then re-run the scope analyzer with the clarifications.
+
+### If `skip_tracking`:
+Tell the developer: "This feature is small enough to implement directly without track decomposition. Just go ahead and implement it in the relevant existing track."
+Stop here.
+
+### If `single_track` or `multi_track`:
+Proceed to the Review Gate.
+
+---
+
+## REVIEW GATE 1: Decomposition Recommendation
+
+Present the scope analysis to the developer:
+
+**For single_track:**
+```
+Feature: "{{args}}"
+
+Recommendation: Single track
+Confidence: {confidence}%
+Boundaries touched: {boundaries}
+
+Proposed track:
+  ID: {suggested_id}
+  Scope: {scope}
+  Complexity: {estimated_complexity}
+  Dependencies: {depends_on}
+
+Approve this decomposition?
+- A) Yes, generate the brief
+- B) Split into multiple tracks instead
+- C) Modify the recommendation
+```
+
+**For multi_track:**
+```
+Feature: "{{args}}"
+
+Recommendation: {N} tracks
+Confidence: {confidence}%
+Boundaries touched: {boundaries}
+
+Proposed tracks:
+  1. {suggested_id} — {scope} (Complexity: {complexity}, Wave: {wave})
+     Dependencies: {depends_on}
+  2. {suggested_id} — {scope} (Complexity: {complexity}, Wave: {wave})
+     Dependencies: {depends_on}
+  ...
+
+{If extensions exist:}
+Track extensions recommended:
+  - Extend {track_id}: {reason}
+
+{If alternative exists:}
+Alternative: {alternative.condition} → {alternative.recommendation}
+
+Approve this decomposition?
+- A) Yes, generate the briefs
+- B) Merge into a single track instead
+- C) Modify the recommendation
+```
+
+Wait for developer approval before proceeding. If they choose B or C, adjust and re-present.
+
+---
+
+## Step 4: Validate Dependency Graph
+
+Before generating briefs, validate that the new tracks integrate without cycles:
+
+```bash
+python ${extensionPath}/scripts/validate_dag.py \
+    --tracks-dir conductor/tracks \
+    --add-tracks '[{"id":"<track_id>","depends_on":["<dep_id>",...]}]'
+```
+
+If cycles are detected, restructure the dependencies and re-validate. Present any dependency issues to the developer.
+
+---
+
+## Step 5: Generate Briefs
+
+> **Critical: Brief vs Spec**
+>
+> You are generating BRIEFS, not specs. A brief tells Conductor what the track
+> is about and what to ask the developer. It does NOT make design decisions.
+>
+> RIGHT (identifying the decision):
+>   "ORM/migration strategy: SQLAlchemy sync vs async? Alembic vs raw SQL?"
+>
+> WRONG (making decisions):
+>   "Use SQLAlchemy 2.0 async with Alembic for migrations"
+>
+> The developer makes design choices during Conductor's implementation phase.
+
+### 5a. Create Track Directories
+
+For each approved track:
+```bash
+mkdir -p conductor/tracks/<track_id>
+```
+
+### 5b. Prepare Context and Generate Briefs
+
+**Parallel execution (if Task tool is available — Claude Code):**
+
+Spawn **brief-generator** sub-agents (agent: `${extensionPath}/agents/brief-generator.md`) for each new track:
+
+1. Run `prepare_brief_context.py` for each track with CLI overrides (metadata.json doesn't exist yet):
+   ```bash
+   python ${extensionPath}/scripts/prepare_brief_context.py \
+       --track <track_id> \
+       --tracks-dir conductor/tracks \
+       --architect-dir architect \
+       --track-name "<name>" \
+       --wave <N> \
+       --complexity <S|M|L|XL> \
+       --description "<scope>" \
+       --dependencies <dep_ids...>
+   ```
+
+2. Spawn brief-generator sub-agent with the context bundle
+3. Each sub-agent writes `brief.md` + `metadata.json` to disk
+4. Collect one-line summaries
+
+**Sequential fallback (if Task tool is unavailable — Gemini CLI):**
+
+For each track:
+1. Run `prepare_brief_context.py` to get context bundle
+2. Run `inject_context.py` to generate context header
+3. Read template: `${extensionPath}/skills/architect/templates/track-brief.md`
+4. Generate `brief.md` with:
+   - **What This Track Delivers** — one paragraph
+   - **Scope IN** — concrete boundaries
+   - **Scope OUT** — what's excluded
+   - **Key Design Decisions** — numbered questions for the developer (3-7)
+   - **Architectural Notes** — integration points, cross-track impacts
+   - **Complexity** — S/M/L/XL
+   - **Estimated Phases** — advisory count
+5. Write `brief.md` and `metadata.json` to `conductor/tracks/<track_id>/`
+
+**Do NOT generate spec.md or plan.md.** Conductor does that interactively.
+
+### 5c. Handle Track Extensions
+
+If the scope analyzer recommended extending existing tracks (TRACK_EXTENSION):
+1. Create a discovery file for each extension in `architect/discovery/pending/`:
+   ```markdown
+   # Discovery: Feature Extension for {track_id}
+
+   - **Source:** /architect-feature
+   - **Timestamp:** {ISO 8601}
+   - **Classification:** TRACK_EXTENSION
+   - **Urgency:** NEXT_WAVE
+   - **Target Track:** {track_id}
+   - **Description:** {reason}
+   - **Suggested Scope Addition:** {what to add}
+   ```
+2. Notify the developer that extension discoveries have been logged
+
+---
+
+## Step 6: Update Artifacts
+
+### 6a. Update conductor/tracks.md
+
+Append the new tracks to `conductor/tracks.md` using Conductor's expected format:
+
+```markdown
+---
+
+## [ ] Track: {track_name}
+- **ID:** {track_id}
+- **Wave:** {wave_number}
+- **Complexity:** {S|M|L|XL}
+- **Dependencies:** {comma-separated dependency IDs}
+
+```
+
+### 6b. Update dependency graph
+
+Write the updated dependency graph now that briefs and metadata exist:
+
+```bash
+python ${extensionPath}/scripts/validate_dag.py \
+    --tracks-dir conductor/tracks \
+    --add-tracks '<tracks_json>' --write
+```
+
+### 6c. Re-sort execution sequence
+
+```bash
+python ${extensionPath}/scripts/topological_sort.py --tracks-dir conductor/tracks
+```
+
+Update `architect/execution-sequence.md` with the new wave ordering.
+
+### 6d. Update diagrams (if they exist)
+
+If `architect/diagrams/` exists (from T-VIZ), regenerate diagrams:
+```bash
+python ${extensionPath}/scripts/generate_diagrams.py \
+    --dependency-graph architect/dependency-graph.md \
+    --architecture architect/architecture.md \
+    --tracks-dir conductor/tracks \
+    --output-dir architect/diagrams/
+```
+
+If the script doesn't exist yet (T-VIZ not implemented), skip silently.
+
+---
+
+## Step 7: Summary
+
+Present a summary of all changes:
+
+```
+Feature decomposition complete: "{{args}}"
+
+New tracks created:
+  - {track_id} — Wave {N}, Complexity {X}, {N} design decisions
+  - ...
+
+Track extensions logged:
+  - {track_id}: {reason}
+
+Artifacts updated:
+  - conductor/tracks.md — {N} new entries
+  - conductor/tracks/<id>/brief.md + metadata.json — per track
+  - architect/execution-sequence.md — updated wave ordering
+  - architect/dependency-graph.md — {N} new edges
+
+Next steps:
+  - Run /conductor:implement to start implementing the new tracks
+  - Run /architect-sync if you need to process any pending discoveries
+```
+
+---
+
+## Differences from /architect-decompose
+
+| Aspect | /architect-decompose | /architect-feature |
+|--------|---------------------|-------------------|
+| Input | product.md, tech-stack.md | Feature description + existing architecture |
+| Scope | Full project | Single feature |
+| Architecture research | Full research phase | Skip — architecture exists |
+| Cross-cutting generation | Generated from scratch | Reads existing, may append |
+| Track count | Typically 5-20 | Typically 1-3 |
+| Dependency graph | Created from scratch | Incrementally updated |
+| Sub-agents | pattern-matcher + codebase-analyzer + brief-generator | brief-generator only |
+| Review gates | 3 (architecture, tracks, summary) | 1 (decomposition recommendation) |
+"""

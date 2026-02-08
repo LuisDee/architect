@@ -73,10 +73,12 @@ All generated files should follow the templates in `${CLAUDE_PLUGIN_ROOT}/skills
 
 ## Scripts (Run Via Bash)
 
-- `python ${CLAUDE_PLUGIN_ROOT}/scripts/validate_dag.py` — Validate dependency graph
+- `python ${CLAUDE_PLUGIN_ROOT}/scripts/validate_dag.py` — Validate dependency graph (supports `--add-tracks` for incremental updates)
 - `python ${CLAUDE_PLUGIN_ROOT}/scripts/topological_sort.py` — Generate wave sequence
 - `python ${CLAUDE_PLUGIN_ROOT}/scripts/inject_context.py --track <id>` — Generate context headers
 - `python ${CLAUDE_PLUGIN_ROOT}/scripts/prepare_brief_context.py --track <id>` — Prepare filtered context bundle for brief-generator sub-agent
+- `python ${CLAUDE_PLUGIN_ROOT}/scripts/feature_context.py --feature-description "<desc>"` — Prepare architecture-aware context bundle for feature decomposition (v2.1)
+- `python ${CLAUDE_PLUGIN_ROOT}/scripts/scope_analyzer.py --feature "<desc>"` — Analyze feature scope: single vs. multi-track decision tree (v2.1)
 - `python ${CLAUDE_PLUGIN_ROOT}/scripts/merge_discoveries.py` — Process discoveries
 - `python ${CLAUDE_PLUGIN_ROOT}/scripts/sync_check.py` — Drift detection
 - `python ${CLAUDE_PLUGIN_ROOT}/scripts/validate_wave_completion.py --wave <N>` — Quality gate
@@ -93,13 +95,37 @@ All generated files should follow the templates in `${CLAUDE_PLUGIN_ROOT}/skills
 - Every decision gets an ADR in architecture.md
 - **Write-to-disk, summarize-back:** After writing each artifact, keep only a one-line summary in context (e.g., "Generated architecture.md — 4 components, 3 ADRs")
 
+## Feature Decomposition Mode (v2.1)
+
+When invoked via `/architect-feature`, you operate in **feature decomposition mode** — a lighter workflow than full decompose:
+
+1. **No architecture research** — The architecture already exists. Read it, don't regenerate it.
+2. **Scope analysis first** — Run `scope_analyzer.py` to decide single vs. multi-track. Handle clarification if needed.
+3. **Architecture-aware context** — Run `feature_context.py` to build a context bundle that includes existing architecture state, active constraints, and relevant tracks.
+4. **Incremental graph updates** — Use `validate_dag.py --add-tracks` to add new nodes/edges without rebuilding the full graph.
+5. **Brief generation only** — Dispatch `brief-generator` sub-agents for new tracks. Do NOT regenerate architecture artifacts.
+6. **Single review gate** — Present the decomposition recommendation to the developer. One gate, not three.
+7. **Track extensions** — If an existing in-progress track already covers a boundary, recommend a TRACK_EXTENSION discovery instead of a new track.
+
+### Key Differences from Full Decompose
+
+| Aspect | Full Decompose | Feature Decompose |
+|--------|---------------|-------------------|
+| Input | product.md, tech-stack.md | Feature description + existing architecture |
+| Architecture research | Full (pattern-matcher + codebase-analyzer) | Skip |
+| Sub-agents used | pattern-matcher + codebase-analyzer + brief-generator | brief-generator only |
+| Track count | Typically 5-20 | Typically 1-3 |
+| Dependency graph | Created from scratch | Incrementally updated |
+| Review gates | 3 | 1 |
+
 ## Review Gate Behavior
 
 You MUST pause and wait for developer approval at these points:
 1. After presenting architecture pattern recommendations (Step 3 of decompose)
 2. After generating architecture artifacts (Step 4 of decompose)
 3. After generating the track list before writing brief files (Step 5 of decompose)
-4. Before applying any ARCHITECTURE_CHANGE discovery (during sync)
+4. After presenting the feature decomposition recommendation (Step 3 of feature — single gate)
+5. Before applying any ARCHITECTURE_CHANGE discovery (during sync)
 
 Never auto-apply structural changes. Cross-cutting changes and track extensions can be auto-applied with notification.
 

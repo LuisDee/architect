@@ -4,13 +4,23 @@
 # The output is prepended to every brief.md. When Conductor generates spec.md,
 # it preserves this context header from the brief.
 #
-# Placeholders: {{TRACK_ID}}, {{WAVE}}, {{CC_VERSION}}, {{CONSTRAINTS}},
-# {{INTERFACES_OWNED}}, {{INTERFACES_CONSUMED}}, {{EVENTS_PUBLISHED}},
-# {{EVENTS_CONSUMED}}, {{DEPENDENCIES}}, {{FULL_CONTEXT_PATHS}}
+# Placeholders: {{TRACK_ID}}, {{WAVE}}, {{CC_VERSION}}, {{REQUIREMENTS}},
+# {{CONSTRAINTS}}, {{INTERFACES_OWNED}}, {{INTERFACES_CONSUMED}},
+# {{EVENTS_PUBLISHED}}, {{EVENTS_CONSUMED}}, {{DEPENDENCIES}}, {{FULL_CONTEXT_PATHS}}
 #
 # If the filled template exceeds 2000 tokens, fall back to context-header-minimal.md.
 
 <!-- ARCHITECT CONTEXT v2 | Track: {{TRACK_ID}} | Wave: {{WAVE}} | CC: {{CC_VERSION}} -->
+
+## Source Requirements (from product.md)
+
+{{REQUIREMENTS}}
+
+<!-- Requirements curated by the orchestrator. Example:
+- Max 50 steps per workflow
+- 100 concurrent executions at MVP
+- 5 minute step timeout
+-->
 
 ## Constraints (filtered for this track)
 

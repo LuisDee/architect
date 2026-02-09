@@ -131,6 +131,7 @@ def get_cc_version(cc_text: str) -> str:
 
 def render_full_header(
     track_id: str, wave: int, cc_version: str,
+    requirements: list[str],
     constraints: list[str], interfaces: dict[str, list[str]],
     dependencies: list[str],
 ) -> str:
@@ -138,9 +139,18 @@ def render_full_header(
     lines = [
         f"<!-- ARCHITECT CONTEXT v2 | Track: {track_id} | Wave: {wave} | CC: {cc_version} -->",
         "",
-        "## Constraints (filtered for this track)",
+        "## Source Requirements (from product.md)",
         "",
     ]
+    if requirements:
+        for req in requirements:
+            lines.append(f"- {req}")
+    else:
+        lines.append("- (none extracted)")
+    lines.append("")
+
+    lines.append("## Constraints (filtered for this track)")
+    lines.append("")
     if constraints:
         lines.extend(constraints)
     else:
@@ -203,6 +213,7 @@ def render_full_header(
 
 def render_minimal_header(
     track_id: str, wave: int, cc_version: str,
+    requirements: list[str],
     constraints: list[str], interfaces: dict[str, list[str]],
     dependencies: list[str],
 ) -> str:
@@ -210,9 +221,19 @@ def render_minimal_header(
     lines = [
         f"<!-- ARCHITECT CONTEXT v2-minimal | Track: {track_id} | Wave: {wave} | CC: {cc_version} -->",
         "",
-        "## Constraints",
+        "## Source Requirements",
         "",
     ]
+    for req in requirements[:3]:
+        lines.append(f"- {req}")
+    if len(requirements) > 3:
+        lines.append(f"- ... ({len(requirements) - 3} more in product.md)")
+    if not requirements:
+        lines.append("- (none extracted)")
+    lines.append("")
+
+    lines.append("## Constraints")
+    lines.append("")
     # Top 5 constraints only
     for c in constraints[:5]:
         lines.append(c)
@@ -253,6 +274,7 @@ def main():
     args = parser.parse_args()
 
     meta = load_track_metadata(args.track, args.tracks_dir)
+    requirements = meta.get("requirements", [])
 
     cc_text = load_file_text(f"{args.architect_dir}/cross-cutting.md")
     interfaces_text = load_file_text(f"{args.architect_dir}/interfaces.md")
@@ -266,7 +288,7 @@ def main():
 
     # Try full header first
     full = render_full_header(
-        args.track, wave, cc_version, constraints, interfaces, dependencies
+        args.track, wave, cc_version, requirements, constraints, interfaces, dependencies
     )
 
     if len(full) <= FULL_CHAR_BUDGET:
@@ -274,7 +296,7 @@ def main():
     else:
         # Fall back to minimal
         header = render_minimal_header(
-            args.track, wave, cc_version, constraints, interfaces, dependencies
+            args.track, wave, cc_version, requirements, constraints, interfaces, dependencies
         )
         if len(header) > MINIMAL_CHAR_BUDGET:
             print(

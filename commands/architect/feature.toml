@@ -10,7 +10,7 @@ The feature description is provided as the command argument: `{{args}}`
 
 ## Context Optimization Strategy
 
-This command is lighter than `/architect-decompose`. It does NOT re-run architecture research — the architecture already exists. It reuses the existing `brief-generator` sub-agent for brief creation and runs the new `scope_analyzer.py` and `feature_context.py` scripts for analysis.
+This command is lighter than `/architect-decompose`. It does NOT re-run architecture research — the architecture already exists. The orchestrator generates briefs directly with full context (feature decomposition typically produces 1-3 tracks). It runs `scope_analyzer.py` and `feature_context.py` scripts for analysis.
 
 ---
 
@@ -186,13 +186,13 @@ For each approved track:
 mkdir -p conductor/tracks/<track_id>
 ```
 
-### 5b. Prepare Context and Generate Briefs
+### 5b. Prepare Context and Generate Briefs (Orchestrator-Direct)
 
-**Parallel execution (if Task tool is available — Claude Code):**
+**You generate all briefs yourself, sequentially.** Feature decomposition typically produces 1-3 tracks, so context is never an issue. This ensures every brief has full access to product.md, architecture.md, cross-cutting.md, interfaces.md, and the feature requirements.
 
-Spawn **brief-generator** sub-agents (agent: `${extensionPath}/agents/brief-generator.md`) for each new track:
+For each approved track:
 
-1. Run `prepare_brief_context.py` for each track with CLI overrides (metadata.json doesn't exist yet):
+1. Run `prepare_brief_context.py` with CLI overrides (metadata.json doesn't exist yet):
    ```bash
    python ${extensionPath}/scripts/prepare_brief_context.py \
        --track <track_id> \
@@ -202,28 +202,39 @@ Spawn **brief-generator** sub-agents (agent: `${extensionPath}/agents/brief-gene
        --wave <N> \
        --complexity <S|M|L|XL> \
        --description "<scope>" \
-       --dependencies <dep_ids...>
+       --dependencies <dep_ids...> \
+       --product-md-path conductor/product.md
    ```
 
-2. Spawn brief-generator sub-agent with the context bundle
-3. Each sub-agent writes `brief.md` + `metadata.json` to disk
-4. Collect one-line summaries
+   If `conductor/product.md` contains requirements relevant to this feature, extract per-track requirements (same approach as Step 4g in `/architect-decompose`) and pass via `--requirements "<req1>" "<req2>" ...`.
 
-**Sequential fallback (if Task tool is unavailable — Gemini CLI):**
+2. Run `inject_context.py` to generate context header:
+   ```bash
+   python ${extensionPath}/scripts/inject_context.py --track <track_id> --tracks-dir conductor/tracks --architect-dir architect
+   ```
+   (Write preliminary metadata.json first if it doesn't exist)
 
-For each track:
-1. Run `prepare_brief_context.py` to get context bundle
-2. Run `inject_context.py` to generate context header
-3. Read template: `${extensionPath}/skills/architect/templates/track-brief.md`
-4. Generate `brief.md` with:
-   - **What This Track Delivers** — one paragraph
-   - **Scope IN** — concrete boundaries
-   - **Scope OUT** — what's excluded
-   - **Key Design Decisions** — numbered questions for the developer (3-7)
-   - **Architectural Notes** — integration points, cross-track impacts
+3. **Enrich with web search** (if available): Search for implementation patterns specific to this track's tech + requirements. Include 2-3 relevant findings in the Enriched Context section.
+
+4. Read template: `${extensionPath}/skills/architect/templates/track-brief.md`
+
+5. Generate `brief.md` — the enriched track specification:
+   - **Source Requirements** — VERBATIM requirements from product.md. Every requirement listed.
+   - **Cross-Cutting Constraints** — ALL applicable constraints
+   - **Interface Contracts** — exact endpoints/events with schemas from interfaces.md
+   - **Dependencies** — track-level dependencies with what is needed from each
+   - **What This Track Delivers** — one paragraph grounded in the requirements
+   - **Scope IN** — concrete boundaries. EACH requirement must have a corresponding scope item.
+   - **Scope OUT** — what's excluded with pointers
+   - **Key Design Decisions** — 3-7 genuine design forks, QUESTIONS not answers
+   - **Architectural Notes** — integration points, cross-track impacts, gotchas
+   - **Enriched Context** — implementation patterns from web search (if available)
+   - **Test Strategy** — framework, unit/integration breakdown, prerequisites
    - **Complexity** — S/M/L/XL
    - **Estimated Phases** — advisory count
-5. Write `brief.md` and `metadata.json` to `conductor/tracks/<track_id>/`
+
+6. Write `brief.md` and `metadata.json` to `conductor/tracks/<track_id>/`
+7. Report one-line summary for this track.
 
 **Do NOT generate spec.md or plan.md.** Conductor does that interactively.
 
@@ -333,6 +344,6 @@ Next steps:
 | Cross-cutting generation | Generated from scratch | Reads existing, may append |
 | Track count | Typically 5-20 | Typically 1-3 |
 | Dependency graph | Created from scratch | Incrementally updated |
-| Sub-agents | pattern-matcher + codebase-analyzer + brief-generator | brief-generator only |
+| Sub-agents | pattern-matcher + codebase-analyzer (briefs: orchestrator-direct) | None (orchestrator-direct) |
 | Review gates | 3 (architecture, tracks, summary) | 1 (decomposition recommendation) |
 """

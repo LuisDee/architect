@@ -65,6 +65,7 @@ def build_metadata_from_args(args: argparse.Namespace) -> dict:
         "interfaces_consumed": args.interfaces_consumed or [],
         "events_published": args.events_published or [],
         "events_consumed": args.events_consumed or [],
+        "requirements": args.requirements or [],
     }
 
 
@@ -233,6 +234,8 @@ def main():
     parser.add_argument("--interfaces-consumed", nargs="*", help="Interfaces this track consumes")
     parser.add_argument("--events-published", nargs="*", help="Events this track publishes")
     parser.add_argument("--events-consumed", nargs="*", help="Events this track consumes")
+    parser.add_argument("--requirements", nargs="*", default=[], help="Per-track requirements from product.md")
+    parser.add_argument("--product-md-path", default="conductor/product.md", help="Path to product.md for fallback access")
 
     args = parser.parse_args()
 
@@ -283,6 +286,8 @@ def main():
         "wave": meta.get("wave", 0),
         "complexity": meta.get("complexity", "M"),
         "description": meta.get("description", ""),
+        "requirements": meta.get("requirements", args.requirements or []),
+        "product_md_path": args.product_md_path,
         "constraints": constraints,
         "interfaces_owned": interfaces_owned,
         "interfaces_consumed": interfaces_consumed,

@@ -3,10 +3,18 @@
 # Emergency fallback when the full context header exceeds 2000 tokens.
 # Includes only: top 5 constraints, interface summary, direct dependencies.
 #
-# Placeholders: {{TRACK_ID}}, {{WAVE}}, {{CC_VERSION}},
+# Placeholders: {{TRACK_ID}}, {{WAVE}}, {{CC_VERSION}}, {{TOP_REQUIREMENTS}},
 # {{TOP_CONSTRAINTS}}, {{INTERFACES_SUMMARY}}, {{DEPENDENCIES_SHORT}}
 
 <!-- ARCHITECT CONTEXT v2-minimal | Track: {{TRACK_ID}} | Wave: {{WAVE}} | CC: {{CC_VERSION}} -->
+
+## Source Requirements
+{{TOP_REQUIREMENTS}}
+
+<!-- Top 3 requirements from product.md. Example:
+- Max 50 steps per workflow
+- 100 concurrent executions
+-->
 
 ## Constraints
 {{TOP_CONSTRAINTS}}

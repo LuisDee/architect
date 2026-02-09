@@ -42,15 +42,16 @@ Phase 1 (MVP): plugin.json → SKILL.md → references → templates → scripts
 Phase 2: examples/sample-project
 Phase 3: Gemini CLI TOML wrappers
 
-## Sub-Agent Optimization
-The `/architect-decompose` command uses **parallel sub-agent dispatch** on Claude Code to keep the orchestrator's context lean (~40-60K token savings on a 15-track project):
+## Sub-Agent Optimization & Brief Generation Strategy
+The `/architect-decompose` command uses **sub-agent dispatch** for architecture research and **orchestrator-direct generation** for track briefs:
 
-- **pattern-matcher** + **codebase-analyzer** spawn in parallel during architecture research — reference files and codebase exploration stay in isolated contexts
-- **brief-generator** instances spawn in batches of 3-5 during track generation — each brief generated in its own context window
-- **prepare_brief_context.py** creates minimal filtered context bundles per track
+- **pattern-matcher** + **codebase-analyzer** spawn in parallel during architecture research (Step 3) — reference files and codebase exploration stay in isolated contexts
+- **Brief generation is orchestrator-direct** (Step 5) — the orchestrator writes all briefs sequentially with full context (product.md, architecture.md, cross-cutting.md, interfaces.md). Brief fidelity requires full context; the token cost (~15-30K extra for a 15-track project) is justified.
+- **brief-generator** sub-agents are available as a FALLBACK for very large projects (25+ tracks) only
+- `prepare_brief_context.py` creates metadata bundles; `validate_requirements.py` audits post-generation coverage
 - Artifacts are written to disk immediately; only one-line summaries stay in the orchestrator's context
 
-All sub-agents return structured, bounded outputs. The orchestrator synthesizes these summaries. If sub-agent spawning fails for any reason, the command falls back to sequential execution in the current context.
+Research sub-agents return structured, bounded outputs. The orchestrator synthesizes summaries for research; it writes briefs directly for full fidelity.
 
 ## Testing
 After generating, test by:

@@ -41,7 +41,7 @@ The decompose command uses specialized sub-agents to keep context lean on Claude
 | `agents/architect-expert.md` | Main orchestrator / solo executor | Spawned by Claude Code for decomposition tasks |
 | `agents/pattern-matcher.md` | Reads reference files, matches signals to patterns | During architecture research (Step 3) — parallel with codebase-analyzer |
 | `agents/codebase-analyzer.md` | Explores codebase, maps structure and dependencies | During architecture research (Step 3) — parallel with pattern-matcher |
-| `agents/brief-generator.md` | Generates one track's brief.md + metadata.json | During track generation (Step 5) — batches of 3-5 in parallel |
+| `agents/brief-generator.md` | Generates one track's brief.md + metadata.json | FALLBACK for 25+ track projects only. Orchestrator generates briefs directly for normal projects. |
 
 ## References (Read Before Generating Architecture)
 
@@ -93,7 +93,8 @@ Python utilities (stdlib only, no pip dependencies). Run from the project root.
 | `scripts/validate_wave_completion.py` | Quality gate with test runner | At wave boundaries |
 | `scripts/check_conductor_compat.py` | Conductor format compatibility check | Before decompose |
 | `scripts/progress.py` | Complexity-weighted progress calculation | During status |
-| `scripts/prepare_brief_context.py` | Prepare filtered context bundle per track | During decompose (Step 5) |
+| `scripts/prepare_brief_context.py` | Prepare filtered context bundle per track (fallback) | During decompose (Step 5) |
+| `scripts/validate_requirements.py` | Post-decompose requirements coverage validator | After brief generation (Step 5e) |
 
 ## System Overview
 
@@ -127,7 +128,7 @@ Architect reads Conductor's files as input, writes Conductor-compatible tracks a
 4. **Clarification (if needed)** — Ask developer ≤ 3 targeted questions, re-run scope analysis
 5. **Review gate** — Present decomposition recommendation, developer approves/modifies
 6. **Validate DAG** — Run `validate_dag.py --add-tracks` to check no cycles
-7. **Generate briefs** — Dispatch brief-generator sub-agents for new tracks
+7. **Generate briefs** — Generate briefs directly with full context (orchestrator-direct)
 8. **Update artifacts** — tracks.md, dependency-graph.md, execution-sequence.md
 
 Key difference from decompose: no architecture research phase (architecture already exists), incremental graph updates, typically 1-3 tracks, single review gate.
@@ -141,10 +142,7 @@ Key difference from decompose: no architecture research phase (architecture alre
    - **Gemini CLI (sequential):** Read reference files and explore codebase directly in current context.
    - Synthesize results, present 3-tier recommendations, developer accepts/rejects/modifies. REVIEW GATE 1.
 4. **Generate architecture (write-to-disk, summarize-back)** — Generate each artifact, write directly to disk, keep only one-line summary in context (e.g., "Generated architecture.md — 4 components, 3 ADRs"). REVIEW GATE 2.
-5. **Generate track briefs (sub-agent dispatch)** — For each track, run prepare_brief_context.py to create filtered context bundle, then:
-   - **Claude Code (parallel):** Spawn brief-generator sub-agents in batches of 3-5. Each writes brief.md + metadata.json to disk and returns one-line summary.
-   - **Gemini CLI (sequential):** Generate briefs one at a time in current context.
-   - Update tracks.md. REVIEW GATE 3.
+5. **Generate track briefs (orchestrator-direct)** — Orchestrator generates all briefs sequentially with full context (product.md, architecture.md, cross-cutting.md, interfaces.md). Each brief is an enriched, self-contained specification with verbatim requirements, full interface contracts, and enriched context from web search. Run `validate_requirements.py` to audit coverage before Review Gate 3. Update tracks.md. REVIEW GATE 3.
 6. **Install hooks** — copy hooks to `architect/hooks/`, add marker to workflow.md, initialize `architect/discovery/`
 
 ### Track State Machine
@@ -232,7 +230,7 @@ Pattern promotion requires explicit developer approval during `/architect-sync`.
 
 Track briefs and metadata include testing context to give Conductor better test strategy guidance:
 
-1. **Test Strategy in Briefs** — Each brief.md includes a `## Test Strategy` section with framework, unit/integration boundaries, prerequisites, quality thresholds, and key test scenarios. Derived from tech-stack.md by the brief-generator agent.
+1. **Test Strategy in Briefs** — Each brief.md includes a `## Test Strategy` section with framework, unit/integration boundaries, prerequisites, quality thresholds, and key test scenarios. Derived from tech-stack.md by the orchestrator (or brief-generator agent in fallback mode).
 2. **Test Prerequisites** — `metadata.json` includes `test_prerequisites[]` listing track IDs whose completion is needed before integration tests can run (e.g., database schema track must complete before API track can run integration tests).
 3. **Quality Thresholds** — Advisory `quality_threshold` in metadata (`line_coverage`, `pass_rate`). Defaults: 80% coverage, 100% pass rate. These are advisory — developer can override during spec generation.
 4. **Prerequisite Validation** — `validate_wave_completion.py` checks that prerequisite tracks are completed before counting a track's wave as passing.

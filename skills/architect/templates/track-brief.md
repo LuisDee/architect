@@ -10,9 +10,11 @@
 # with developer input.
 #
 # Placeholders: {track_id}, {track_number}, {track_name}, {wave}, {cc_version},
-# {filtered_constraints}, {interfaces_owned}, {interfaces_consumed},
+# {requirements}, {filtered_constraints},
+# {interfaces_owned_detailed}, {interfaces_consumed_detailed},
 # {direct_dependencies}, {one_paragraph_description}, {scope_in}, {scope_out},
-# {design_decisions}, {architectural_notes}, {complexity}, {estimated_phases}
+# {design_decisions}, {architectural_notes}, {enriched_context},
+# {test_strategy}, {complexity}, {estimated_phases}
 #
 # ---
 # CRITICAL: Brief vs Spec — Guidance for the Generating Agent
@@ -43,6 +45,23 @@
 
 <!-- ARCHITECT CONTEXT | Track: {track_id} | Wave: {wave} | CC: {cc_version} -->
 
+## Source Requirements (from product.md)
+
+{requirements}
+
+<!-- EVERY product.md requirement mapped to this track by the orchestrator.
+     These are VERBATIM — not summarized, not paraphrased.
+     Each requirement below MUST have a corresponding item in Scope IN.
+
+     Example:
+- Workflows support up to 50 steps
+- Step timeout: 5 minutes (configurable per step type)
+- 100 concurrent workflow executions at MVP scale
+- Support parallel step execution and conditional branching
+- Workflow execution history retained for 90 days
+- Step retry with configurable backoff (max 3 retries default)
+-->
+
 ## Cross-Cutting Constraints
 {filtered_constraints}
 
@@ -52,23 +71,34 @@
 - Testing: TDD, 80% coverage, integration tests for API boundaries
 -->
 
-## Interfaces
+## Interface Contracts
 
-### Owns
-{interfaces_owned}
+### Owns (this track produces)
+{interfaces_owned_detailed}
 
-<!-- Endpoints/events this track produces. Example:
+<!-- Full contract details from interfaces.md. Example:
 - POST /v1/workflows — Create workflow
+  Request: { name: string, description?: string, trigger_type: enum, steps: Step[] }
+  Response: { data: Workflow }
+  Auth: Bearer JWT
 - GET /v1/workflows — List workflows (cursor pagination)
-- workflow.created { workflow_id, owner_id, timestamp }
+  Query: { cursor?: string, limit?: int (default 20, max 100) }
+  Response: { data: Workflow[], meta: { next_cursor?: string } }
+  Auth: Bearer JWT
+- workflow.created { workflow_id: uuid, owner_id: uuid, step_count: int, timestamp: ISO8601 }
+  Published via: transactional outbox
 -->
 
-### Consumes
-{interfaces_consumed}
+### Consumes (this track depends on)
+{interfaces_consumed_detailed}
 
-<!-- Endpoints/events from other tracks this track depends on. Example:
+<!-- Full contract details of what this track calls. Example:
 - GET /v1/auth/me (Track 03_auth) — Current user context
-- user.deleted (Track 03_auth) — Cascade-delete user's workflows
+  Response: { data: { user_id, email, roles[] } }
+  Used for: Authorization checks in workflow endpoints
+- user.deleted (Track 03_auth)
+  Payload: { user_id: uuid, timestamp: ISO8601 }
+  Used for: Cascade-delete user's workflows
 -->
 
 ## Dependencies
@@ -96,12 +126,15 @@
 {scope_in}
 
 <!-- Bulleted list of what this track covers. Be specific about boundaries.
+     EACH requirement from Source Requirements MUST have a corresponding scope item.
      Example:
      - JWT token generation and validation (access + refresh)
      - Password hashing and verification
      - RBAC middleware with role hierarchy
      - API key authentication as alternative auth path
      - Auth-related database queries (user lookup, token storage)
+     - Session timeout: 30 min inactivity (per product.md requirement)
+     - Max 5 failed login attempts before lockout (per product.md requirement)
 -->
 
 ### OUT
@@ -125,15 +158,15 @@ These should be resolved with the developer during spec generation:
      present the options, and note the trade-off. Conductor will ask the developer
      about each one.
 
-     Example:
+     Ground decisions in the Source Requirements. Example:
      1. Token storage: httpOnly cookies vs localStorage?
         Trade-off: XSS protection vs simpler client implementation
      2. Refresh token rotation: rotate on every use vs fixed expiry?
         Trade-off: security (leaked tokens expire faster) vs simplicity
-     3. RBAC granularity: role-based (admin/user) vs permission-based (can_edit, can_delete)?
+     3. Lockout strategy (product.md: "max 5 failed attempts"): temporary vs permanent lockout?
+        Trade-off: user friction vs security (permanent lockout enables DoS)
+     4. RBAC granularity: role-based (admin/user) vs permission-based (can_edit, can_delete)?
         Trade-off: simplicity vs flexibility for future permission needs
-     4. Password policy: enforce complexity rules vs minimum length only?
-        Trade-off: security vs user friction at MVP stage
      5. API key scope: global access vs per-endpoint scopes?
         Trade-off: simplicity vs principle of least privilege
 
@@ -161,11 +194,31 @@ These should be resolved with the developer during spec generation:
        where JWT auth isn't practical
 -->
 
+## Enriched Context
+
+{enriched_context}
+
+<!-- Implementation patterns and best practices discovered via web search
+     for this track's specific technology + requirements combination.
+     This gives Conductor richer starting context than the developer alone.
+
+     Example:
+- FastAPI dependency injection for auth middleware: use `Depends(get_current_user)`
+  pattern; create `security.py` module with reusable dependencies
+- Celery canvas for DAG execution: use `chain()` for sequential, `group()` for
+  parallel, `chord()` for fan-out/fan-in; set `task_time_limit` per step type
+- SQLAlchemy async session: use `async_sessionmaker` with `expire_on_commit=False`;
+  wrap in FastAPI `Depends` for request-scoped sessions
+
+     If web search is unavailable, this section may be omitted or contain
+     general best practices from the generating agent's knowledge.
+-->
+
 ## Test Strategy
 
 {test_strategy}
 
-<!-- Inferred from tech-stack.md. The brief-generator derives this based on
+<!-- Inferred from tech-stack.md. The generating agent derives this based on
      the project's framework choices. Conductor may override during spec generation.
 
      Example:

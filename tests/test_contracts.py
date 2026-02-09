@@ -43,13 +43,12 @@ import re
 import sys
 from pathlib import Path
 
-
 # -------------------------------------------------------------------
 # Test infrastructure
 # -------------------------------------------------------------------
 
 class TestResult:
-    __slots__ = ("name", "group", "passed", "message", "severity")
+    __slots__ = ("group", "message", "name", "passed", "severity")
 
     def __init__(self, name: str, group: str, passed: bool,
                  message: str, severity: str = "CRITICAL"):
@@ -265,8 +264,8 @@ def validate_metadata_json(t: TestRunner, metadata_path: Path,
         t.check(
             'Uses "status" field (not "state")',
             False,
-            f"Found 'state' field. "
-            f"Conductor reads 'status'. Architect must write 'status'.",
+            "Found 'state' field. "
+            "Conductor reads 'status'. Architect must write 'status'.",
         )
     else:
         t.check(
@@ -618,8 +617,8 @@ def validate_cross_references(t: TestRunner, conductor_dir: Path,
         t.check(
             f"Track {track_id} has brief.md or spec.md",
             has_brief or has_spec,
-            f"Track directory has neither brief.md nor spec.md "
-            f"-- cannot implement",
+            "Track directory has neither brief.md nor spec.md "
+            "-- cannot implement",
         )
 
 
@@ -932,9 +931,8 @@ def validate_negative_forward_wave(t: TestRunner, tracks_path: Path):
     found_forward = False
     for trk in parsed:
         for dep_id in trk["dependencies"]:
-            if dep_id in track_by_id:
-                if track_by_id[dep_id]["wave"] >= trk["wave"]:
-                    found_forward = True
+            if dep_id in track_by_id and track_by_id[dep_id]["wave"] >= trk["wave"]:
+                found_forward = True
 
     t.check(
         "Forward-wave dependency detected in bad fixture",

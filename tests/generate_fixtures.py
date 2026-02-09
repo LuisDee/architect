@@ -8,7 +8,6 @@ Usage:
     python tests/generate_fixtures.py
 """
 import json
-import os
 from pathlib import Path
 
 FIXTURES = Path(__file__).parent / "fixtures"

@@ -203,10 +203,9 @@ class TestAnalyzeScope(unittest.TestCase):
             "architecture_state": SAMPLE_ARCH_STATE,
         })
         # 02_auth covers data_model and api_layer, and is in_progress
-        if result["recommendation"] == "multi_track":
-            if "extensions" in result:
-                ext_tracks = [e["track_id"] for e in result["extensions"]]
-                self.assertIn("02_auth", ext_tracks)
+        if result["recommendation"] == "multi_track" and "extensions" in result:
+            ext_tracks = [e["track_id"] for e in result["extensions"]]
+            self.assertIn("02_auth", ext_tracks)
 
     def test_has_confidence_score(self):
         result = sa.analyze_scope({
@@ -261,7 +260,7 @@ class TestIntegration(unittest.TestCase):
 
     def _run_script(self, args: list[str], stdin: str = "") -> subprocess.CompletedProcess:
         return subprocess.run(
-            [sys.executable, str(SCRIPT_PATH)] + args,
+            [sys.executable, str(SCRIPT_PATH), *args],
             capture_output=True,
             text=True,
             input=stdin or None,

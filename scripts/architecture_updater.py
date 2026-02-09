@@ -24,7 +24,7 @@ import argparse
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Import sibling module
@@ -363,7 +363,7 @@ def update_architecture(
     arch_path = Path(architect_dir)
     track_path = Path(track_dir)
     track_id = track_path.name
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # Step 1: Extract decisions
     extraction = ed.extract_decisions(track_dir, architect_dir)

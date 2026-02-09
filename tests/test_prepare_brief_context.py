@@ -204,6 +204,7 @@ class TestBuildMetadataFromArgs(unittest.TestCase):
             interfaces_consumed=["GET /users/{id}"],
             events_published=["user.logged_in"],
             events_consumed=["user.created"],
+            requirements=["Support JWT auth"],
         )
         meta = pbc.build_metadata_from_args(args)
         self.assertEqual(meta["track_id"], "03_auth")
@@ -225,6 +226,7 @@ class TestBuildMetadataFromArgs(unittest.TestCase):
             interfaces_consumed=None,
             events_published=None,
             events_consumed=None,
+            requirements=None,
         )
         meta = pbc.build_metadata_from_args(args)
         self.assertEqual(meta["description"], "")
@@ -238,7 +240,7 @@ class TestIntegration(unittest.TestCase):
 
     def _run_script(self, args: list[str]) -> subprocess.CompletedProcess:
         return subprocess.run(
-            [sys.executable, str(SCRIPT_PATH)] + args,
+            [sys.executable, str(SCRIPT_PATH), *args],
             capture_output=True,
             text=True,
         )

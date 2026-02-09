@@ -33,7 +33,6 @@ from collections import Counter
 from difflib import SequenceMatcher
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Requirement extraction
 # ---------------------------------------------------------------------------
@@ -130,14 +129,12 @@ def extract_requirements_from_product_md(product_md_path: str) -> list[str]:
         is_requirement = False
 
         # Heuristic 1: Lines containing specific numbers/quantities
-        if re.search(r"\d+", stripped):
-            if is_list_item or in_requirement_section:
-                is_requirement = True
+        if re.search(r"\d+", stripped) and (is_list_item or in_requirement_section):
+            is_requirement = True
 
         # Heuristic 2: List items with requirement keywords
-        if is_list_item:
-            if any(kw in content_lower for kw in REQUIREMENT_KEYWORDS):
-                is_requirement = True
+        if is_list_item and any(kw in content_lower for kw in REQUIREMENT_KEYWORDS):
+            is_requirement = True
 
         # Heuristic 3: All list items in requirement sections
         if in_requirement_section and is_list_item:
@@ -579,24 +576,24 @@ def main():
         print(f"  Product.md requirements extracted: {total_product}")
         print(f"  Mapped to tracks: {total_mapped}/{total_product} ({100.0 if total_product == 0 else round(total_mapped / total_product * 100, 1)}%)")
         if total_unmapped > 0:
-            print(f"\n  UNMAPPED requirements from product.md:")
+            print("\n  UNMAPPED requirements from product.md:")
             for req in product_coverage["unmapped"]:
                 print(f"    - {req}")
         print(f"\n  Track requirements in briefs: {total_in_briefs}/{total_track_reqs} ({round(brief_pct, 1)}%)")
         if total_missing_from_briefs > 0:
-            print(f"\n  MISSING from briefs (in metadata but not in brief Source Requirements):")
+            print("\n  MISSING from briefs (in metadata but not in brief Source Requirements):")
             for item in brief_coverage["missing"]:
                 print(f"    - Track {item['track']}: \"{item['requirement']}\" — {item['reason']}")
         print(f"\n  Scope IN coverage: {total_scope_covered}/{total_track_reqs} ({round(scope_pct, 1)}%)")
         if total_scope_gaps > 0:
-            print(f"\n  GAPS (requirement in brief but not in Scope IN):")
+            print("\n  GAPS (requirement in brief but not in Scope IN):")
             for gap in scope_coverage["gaps"]:
                 print(f"    - Track {gap['track']}: \"{gap['requirement']}\" — not in {gap['section']}")
 
         if not has_gaps:
             print("\n  All requirements covered.")
         else:
-            print(f"\n  GAPS FOUND — review and fix before proceeding.")
+            print("\n  GAPS FOUND — review and fix before proceeding.")
 
     sys.exit(1 if has_gaps else 0)
 

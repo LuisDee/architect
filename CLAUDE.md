@@ -34,8 +34,8 @@ architect-plugin/
 - All templates use Markdown
 - Keep SKILL.md under 500 lines; detailed content goes in references/
 
-## Syncing Gemini CLI Commands
-After changing any command in commands/*.md, run `scripts/sync-gemini-commands.sh` to update the Gemini CLI commands.
+## Syncing Gemini CLI Files
+After changing any command in `commands/*.md` or agent in `agents/*.md`, run `scripts/sync-gemini.sh` to regenerate Gemini CLI commands and agent files.
 
 ## Implementation Order
 Phase 1 (MVP): plugin.json → SKILL.md → references → templates → scripts → commands → agent → project-hooks → README

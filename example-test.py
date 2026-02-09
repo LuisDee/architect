@@ -36,13 +36,10 @@ What CAN be tested:
 
 import argparse
 import json
-import os
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
-
 
 # ─────────────────────────────────────────────────────────────
 # Test infrastructure
@@ -551,8 +548,8 @@ def validate_cross_references(t: TestRunner, conductor_dir: Path,
         t.check(
             f"Track {track_id} has brief.md or spec.md",
             has_brief or has_spec,
-            f"Track directory has neither brief.md nor spec.md — "
-            f"cannot implement",
+            "Track directory has neither brief.md nor spec.md — "
+            "cannot implement",
         )
 
 
@@ -748,7 +745,7 @@ def run_fixture_tests(t: TestRunner, fixtures_dir: Path):
 
         # Bad tracks.md (table format)
         if (bad_dir / "tracks_table_format.md").exists():
-            bad_parsed = validate_tracks_md(
+            validate_tracks_md(
                 t, bad_dir / "tracks_table_format.md"
             )
             # We EXPECT these to fail — the failures prove our

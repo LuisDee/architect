@@ -301,7 +301,6 @@ def check_structural_drift(
             continue
 
         # Check if track's scope references components not in architecture
-        scope = t.get("scope", "").lower()
         boundaries = [b.lower() for b in t.get("boundaries", [])]
 
         for boundary in boundaries:

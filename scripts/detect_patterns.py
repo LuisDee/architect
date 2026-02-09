@@ -19,8 +19,6 @@ import argparse
 import json
 import re
 import sys
-from pathlib import Path
-
 
 # Known cross-cutting categories (from cross-cutting-catalog.md)
 ALWAYS_EVALUATE = [

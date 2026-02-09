@@ -24,7 +24,6 @@ Output (JSON to stdout):
 
 import argparse
 import json
-import os
 import re
 import shutil
 import sys

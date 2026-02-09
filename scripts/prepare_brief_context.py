@@ -260,7 +260,6 @@ def main():
 
     # Load architecture artifacts
     cc_text = load_text(architect_dir / "cross-cutting.md")
-    interfaces_text = load_text(architect_dir / "interfaces.md")
     arch_text = load_text(architect_dir / "architecture.md")
 
     # Extract filtered content

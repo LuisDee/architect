@@ -19,9 +19,7 @@ Output: JSON to stdout with filtered context for feature analysis.
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
-
 
 # Token budget per section (chars / 4 ≈ tokens)
 TOKEN_BUDGET = {

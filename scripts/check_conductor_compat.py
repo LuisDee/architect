@@ -22,7 +22,6 @@ import json
 import sys
 from pathlib import Path
 
-
 REQUIRED_FILES = ["product.md", "tech-stack.md", "workflow.md"]
 OPTIONAL_FILES = ["product-guidelines.md", "tracks.md"]
 

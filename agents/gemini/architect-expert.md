@@ -7,7 +7,7 @@ description: >
   Works with Conductor's track system. Reads project requirements and
   generates fully sequenced, dependency-aware track briefs with scope,
   key design decisions, and cross-cutting constraints.
-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch
+tools: [read_file, grep_search, glob, run_shell_command, write_file, google_web_search, web_fetch]
 ---
 
 # Architect Expert Agent

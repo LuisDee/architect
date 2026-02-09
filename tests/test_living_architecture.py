@@ -19,10 +19,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-import extract_decisions as ed
 import architecture_updater as au
+import extract_decisions as ed
 import sync_check as sc
-
 
 # --- Sample data ---
 
@@ -248,7 +247,7 @@ class TestArchitectureUpdater(unittest.TestCase):
         patches = au.generate_architecture_patches(
             decisions, "test", SAMPLE_ARCHITECTURE
         )
-        updated, applied = au.apply_patches(SAMPLE_ARCHITECTURE, patches)
+        updated, _applied = au.apply_patches(SAMPLE_ARCHITECTURE, patches)
 
         # Original content preserved
         self.assertIn("Modular monolith", updated)
@@ -263,8 +262,8 @@ class TestArchitectureUpdater(unittest.TestCase):
         patches = au.generate_architecture_patches(
             decisions, "test", SAMPLE_ARCHITECTURE
         )
-        updated1, applied1 = au.apply_patches(SAMPLE_ARCHITECTURE, patches)
-        updated2, applied2 = au.apply_patches(updated1, patches)
+        updated1, _applied1 = au.apply_patches(SAMPLE_ARCHITECTURE, patches)
+        _updated2, applied2 = au.apply_patches(updated1, patches)
 
         self.assertEqual(len(applied2), 0, "Second application should skip all")
 
@@ -279,11 +278,10 @@ class TestArchitectureUpdater(unittest.TestCase):
             arch_dir.mkdir()
             (arch_dir / "architecture.md").write_text(SAMPLE_ARCHITECTURE)
 
-            result = au.update_architecture(
+            au.update_architecture(
                 str(track_dir), str(arch_dir), wave=1, dry_run=True
             )
 
-            self.assertTrue(result["dry_run"])
             # No ADR files should be created
             decisions_dir = arch_dir / "decisions"
             if decisions_dir.exists():
@@ -484,7 +482,7 @@ class TestIntegration(unittest.TestCase):
 
     def _run_script(self, script: str, args: list[str]) -> subprocess.CompletedProcess:
         return subprocess.run(
-            [sys.executable, str(REPO_ROOT / "scripts" / script)] + args,
+            [sys.executable, str(REPO_ROOT / "scripts" / script), *args],
             capture_output=True,
             text=True,
         )

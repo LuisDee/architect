@@ -21,7 +21,6 @@ import json
 import re
 import sys
 
-
 # --- Boundary identification ---
 
 BOUNDARY_SIGNALS = {
@@ -142,10 +141,7 @@ def is_atomic(description: str, boundaries: list[str]) -> bool:
     ]
     non_atomic_score = sum(1 for s in non_atomic_signals if s in desc_lower)
 
-    if len(boundaries) == 2 and atomic_score > non_atomic_score:
-        return True
-
-    return False
+    return bool(len(boundaries) == 2 and atomic_score > non_atomic_score)
 
 
 def is_trivial(
@@ -248,7 +244,6 @@ def analyze_scope(input_data: dict) -> dict:
 
     # Step 4: Check atomicity for single-track case
     if len(boundaries) <= 1 or is_atomic(description, boundaries):
-        wave = compute_wave([], existing_tracks)
         return {
             "recommendation": "single_track",
             "confidence": 0.8 if len(boundaries) <= 1 else 0.65,

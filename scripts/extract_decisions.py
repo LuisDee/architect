@@ -16,9 +16,7 @@ Output (JSON to stdout): List of classified decisions with ADR recommendations.
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
-
 
 # --- Decision search patterns ---
 
@@ -198,9 +196,7 @@ def classify_adr_worthiness(decision: dict, all_decisions: list[dict]) -> bool:
         return True
     if decision["type"] == "PATTERN":
         return True
-    if decision.get("in_decision_section"):
-        return True
-    return False
+    return bool(decision.get("in_decision_section"))
 
 
 def generate_adr_slug(decision: dict) -> str:

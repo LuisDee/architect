@@ -152,7 +152,7 @@ class TestIntegration(unittest.TestCase):
 
     def _run_script(self, args: list[str]) -> subprocess.CompletedProcess:
         return subprocess.run(
-            [sys.executable, str(SCRIPT_PATH)] + args,
+            [sys.executable, str(SCRIPT_PATH), *args],
             capture_output=True,
             text=True,
         )

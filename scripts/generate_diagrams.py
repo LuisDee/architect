@@ -19,9 +19,7 @@ Output (JSON to stdout + files written to output-dir).
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
-
 
 # --- Status styling ---
 
@@ -204,7 +202,7 @@ def generate_component_map(components: list[dict]) -> str:
 
     lines = ["graph TD"]
 
-    for i, comp in enumerate(components):
+    for _i, comp in enumerate(components):
         safe_id = sanitize_id(comp["name"])
         tech = comp.get("technology", "")
         label = comp["name"]

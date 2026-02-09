@@ -13,7 +13,6 @@ import json
 import subprocess
 import sys
 import tempfile
-import textwrap
 import unittest
 from pathlib import Path
 
@@ -21,7 +20,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import validate_wave_completion as vwc
-
 
 # --- Test Brief Template ---
 
@@ -115,7 +113,7 @@ class TestCheckTestPrerequisites(unittest.TestCase):
 
     def test_missing_prerequisites_key_passes(self):
         meta = {}
-        ok, msg = vwc.check_test_prerequisites(meta, "/nonexistent")
+        ok, _msg = vwc.check_test_prerequisites(meta, "/nonexistent")
         self.assertTrue(ok)
 
     def test_prerequisite_completed(self):
@@ -252,7 +250,6 @@ class TestLogOverride(unittest.TestCase):
             self.assertEqual(len(saved["override_log"]), 1)
 
     def test_override_has_iso_timestamp(self):
-        import re
         with tempfile.TemporaryDirectory() as tmpdir:
             meta_path = Path(tmpdir) / "metadata.json"
             meta = {"track_id": "03_auth", "override_log": []}

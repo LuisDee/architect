@@ -164,20 +164,38 @@ Architect works with both Claude Code and Gemini CLI from a single repo.
 | Commands | commands/*.md | commands/architect/*.toml |
 | Manifest | .claude-plugin/plugin.json | gemini-extension.json |
 | Context | CLAUDE.md | GEMINI.md |
-| Agents | agents/*.md | agents/*.md (same) |
+| Agents | agents/*.md | agents/gemini/*.md (generated) |
 | Skills | skills/*/SKILL.md | skills/*/SKILL.md (same) |
 | Scripts | scripts/*.py | scripts/*.py (same) |
 | Templates | Shared | Shared |
 
 ## Development
 
-After changing any command in `commands/*.md`, run the sync script to regenerate the Gemini CLI TOML commands:
+After changing any command in `commands/*.md` or agent in `agents/*.md`, run the sync script to regenerate Gemini CLI files:
 
 ```bash
-scripts/sync-gemini-commands.sh
+scripts/sync-gemini.sh
 ```
 
-The script extracts the description and prompt body from each Markdown command, replaces `${CLAUDE_PLUGIN_ROOT}` with `${extensionPath}` and `$ARGUMENTS` with `{{args}}`, and writes the corresponding TOML file to `commands/architect/`.
+The script:
+1. Extracts description and prompt body from each Markdown command, replaces `${CLAUDE_PLUGIN_ROOT}` with `${extensionPath}` and `$ARGUMENTS` with `{{args}}`, and writes TOML files to `commands/architect/`
+2. Converts agent frontmatter tool names from Claude Code format (PascalCase) to Gemini CLI format (snake_case), outputs to `agents/gemini/`
+
+### Gemini CLI Agent Setup
+
+The canonical agent files in `agents/` use Claude Code tool names (`Read`, `Write`, `Bash`, etc.). Gemini CLI requires its own tool name format (`read_file`, `write_file`, `run_shell_command`, etc.). The sync script generates Gemini-compatible copies in `agents/gemini/`.
+
+If `gemini extensions validate` fails on agent tool names, copy the generated agents:
+
+```bash
+# Generate Gemini-compatible agents
+scripts/sync-gemini.sh
+
+# Copy over canonical agents for Gemini validation
+cp agents/gemini/*.md agents/
+```
+
+**Note:** This overwrites Claude Code format agents in `agents/`. To restore Claude Code format, run `git checkout agents/`.
 
 ## License
 

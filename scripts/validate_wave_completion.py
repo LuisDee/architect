@@ -29,6 +29,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import UTC
 from pathlib import Path
 
 
@@ -173,11 +174,11 @@ def log_override(
     meta: dict, meta_path: Path, check: str, reason: str
 ) -> None:
     """Append an override entry to metadata.json override_log."""
-    from datetime import datetime, timezone
+    from datetime import datetime
     override_entry = {
         "check": check,
         "reason": reason,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     override_log = meta.get("override_log", [])

@@ -200,7 +200,7 @@ class TestGenerateDiagramsIntegration(unittest.TestCase):
 
             output_dir = Path(tmpdir) / "diagrams"
 
-            result = gd.generate_diagrams(
+            gd.generate_diagrams(
                 str(tracks_dir), str(arch_dir), str(output_dir)
             )
             self.assertTrue(output_dir.exists())
